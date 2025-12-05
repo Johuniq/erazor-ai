@@ -28,7 +28,7 @@ const competitors = [
     price: "Free to start",
     speed: "< 5s",
     quality: "Excellent",
-    freeCredits: "3 (no signup)",
+    freeCredits: "3 (10 on signup)",
     api: true,
     batch: true,
     highlight: true,

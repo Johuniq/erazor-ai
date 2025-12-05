@@ -348,7 +348,7 @@ export default async function BillingPage({
                                 variant={isPopular ? "default" : "outline"}
                                 className={cn("w-full", !isPopular && "bg-transparent")}
                               >
-                                <Link href={`/api/checkout?priceId=${price?.id}`}>
+                                <Link href={`/api/checkout?product=${product.id}`}>
                                   Upgrade
                                 </Link>
                               </Button>
