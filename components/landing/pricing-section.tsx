@@ -13,7 +13,7 @@ const plans = [
     description: "Try it out with no commitment",
     monthlyPrice: 0,
     yearlyPrice: 0,
-    credits: 10,
+    credits: "10 credits to start",
     features: [
       "10 free credits",
       "Background removal",
@@ -29,7 +29,7 @@ const plans = [
     description: "For professionals and small teams",
     monthlyPrice: 19,
     yearlyPrice: 190,
-    credits: 200,
+    credits: "200 credits per month",
     features: [
       "200 credits/month",
       "Background removal",
@@ -48,7 +48,7 @@ const plans = [
     description: "For large teams and businesses",
     monthlyPrice: 99,
     yearlyPrice: 990,
-    credits: 2000,
+    credits: "2,000 credits per month",
     features: [
       "2000 credits/month",
       "Everything in Pro",
@@ -130,9 +130,7 @@ export function PricingSection() {
                   <span className="text-4xl font-bold">${annual ? plan.yearlyPrice : plan.monthlyPrice}</span>
                   {plan.monthlyPrice > 0 && <span className="text-muted-foreground">/{annual ? "year" : "month"}</span>}
                 </div>
-                <p className="mb-6 text-sm text-muted-foreground">
-                  {plan.credits.toLocaleString()} credits {plan.monthlyPrice > 0 ? "per month" : "to start"}
-                </p>
+                <p className="mb-6 text-sm text-muted-foreground">{plan.credits}</p>
                 <ul className="space-y-3">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-start gap-3">

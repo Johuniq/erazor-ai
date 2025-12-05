@@ -15,16 +15,42 @@ const polar = new Polar({
   server: "production",
 })
 
+// Hardcoded benefits for each plan
+const planBenefits: Record<string, string[]> = {
+  free: [
+    "10 free credits",
+    "Background removal",
+    "Image upscaling (2x)",
+    "Standard quality",
+    "Community support",
+  ],
+  pro: [
+    "200 credits/month",
+    "Background removal",
+    "Image upscaling (4x)",
+    "HD quality export",
+    "Priority processing",
+    "Email support",
+    "History & downloads",
+  ],
+  enterprise: [
+    "2000 credits/month",
+    "Everything in Pro",
+    "Batch processing",
+    "API access",
+    "Custom integrations",
+    "Dedicated support",
+    "SLA guarantee",
+  ],
+}
+
 // Free plan that's always shown
 const freePlan = {
   id: "free",
   name: "Free",
-  description: "Get started with basic features",
-  benefits: [
-    { description: "10 free credits" },
-    { description: "Background removal" },
-    { description: "2x upscaling" },
-  ],
+  description: "Try it out with no commitment",
+  credits: "10 credits to start",
+  benefits: planBenefits.free,
 }
 
 async function getProducts() {
@@ -175,16 +201,16 @@ export default async function BillingPage({
                         <div className="mt-2 flex items-baseline gap-1">
                           <span className="text-4xl font-bold">$0</span>
                         </div>
-                        <p className="mt-1 text-sm text-muted-foreground">10 credits to start</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{freePlan.credits}</p>
                       </div>
 
                       <ul className="mb-6 space-y-3">
                         {freePlan.benefits.map((benefit) => (
-                          <li key={benefit.description} className="flex items-center gap-2.5 text-sm">
+                          <li key={benefit} className="flex items-center gap-2.5 text-sm">
                             <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15">
                               <Check className="h-3 w-3 text-primary" />
                             </div>
-                            {benefit.description}
+                            {benefit}
                           </li>
                         ))}
                       </ul>
@@ -194,7 +220,7 @@ export default async function BillingPage({
                       </Button>
                     </div>
 
-                    {/* Dynamic Plans from Polar */}
+                    {/* Dynamic Plans from Polar with hardcoded benefits */}
                     {products
                       .filter((product) => {
                         const hasMatchingPrice = product.prices.some((price) => {
@@ -224,8 +250,11 @@ export default async function BillingPage({
                             ? price.priceCurrency
                             : "usd"
 
-                        const isPopular = index === 0 // First paid plan is popular
+                        const isPopular = index === 0
                         const isCurrentPlan = profile?.plan?.toLowerCase() === product.name.toLowerCase()
+                        
+                        // Use hardcoded benefits based on product name
+                        const benefits = planBenefits[product.name.toLowerCase()] || []
 
                         return (
                           <div
@@ -261,12 +290,12 @@ export default async function BillingPage({
                             </div>
 
                             <ul className="mb-6 space-y-3">
-                              {product.benefits.map((benefit) => (
-                                <li key={benefit.id} className="flex items-center gap-2.5 text-sm">
+                              {benefits.map((benefit) => (
+                                <li key={benefit} className="flex items-center gap-2.5 text-sm">
                                   <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15">
                                     <Check className="h-3 w-3 text-primary" />
                                   </div>
-                                  {benefit.description}
+                                  {benefit}
                                 </li>
                               ))}
                             </ul>
