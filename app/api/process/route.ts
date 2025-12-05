@@ -8,7 +8,7 @@ const UPSCALER_API = "https://api-upscaler.icons8.com/api/v1"
 // Initialize Polar client for event ingestion
 const polar = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN!,
-  server: process.env.NODE_ENV === "production" ? "production" : "sandbox",
+  server: process.env.NODE_ENV === "production" ? "production" : "production",
 })
 
 export async function POST(request: NextRequest) {
