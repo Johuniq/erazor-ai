@@ -3,6 +3,9 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Prevent trailing slash redirects (fixes webhook 307/308 issues)
+  skipTrailingSlashRedirect: true,
+  trailingSlash: false,
 
 images: {
     remotePatterns: [
