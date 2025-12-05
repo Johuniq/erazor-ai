@@ -1,40 +1,52 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { CreditCard, Check, Zap, CheckCircle, AlertCircle, Sparkles, ArrowRight, Clock } from "lucide-react"
-import Link from "next/link"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { createClient } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
+import { Polar } from "@polar-sh/sdk"
+import { AlertCircle, ArrowRight, Check, CheckCircle, Clock, CreditCard, Sparkles, Zap } from "lucide-react"
+import Link from "next/link"
+import { redirect } from "next/navigation"
 
-const POLAR_PRO_PRODUCT_ID = process.env.POLAR_PRO_PRODUCT_ID
-const POLAR_ENTERPRISE_PRODUCT_ID = process.env.POLAR_ENTERPRISE_PRODUCT_ID
+const polar = new Polar({
+  accessToken: process.env.POLAR_ACCESS_TOKEN!,
+  server: "production",
+})
 
-const plans = [
-  {
-    name: "Free",
-    price: 0,
-    credits: 10,
-    features: ["10 free credits", "Background removal", "2x upscaling"],
-    productId: null,
-  },
-  {
-    name: "Pro",
-    price: 19,
-    credits: 200,
-    features: ["200 credits/month", "Background removal", "4x upscaling", "Priority processing"],
-    popular: true,
-    productId: POLAR_PRO_PRODUCT_ID,
-  },
-  {
-    name: "Enterprise",
-    price: 99,
-    credits: 2000,
-    features: ["2000 credits/month", "Everything in Pro", "API access", "Dedicated support"],
-    productId: POLAR_ENTERPRISE_PRODUCT_ID,
-  },
-]
+// Free plan that's always shown
+const freePlan = {
+  id: "free",
+  name: "Free",
+  description: "Get started with basic features",
+  benefits: [
+    { description: "10 free credits" },
+    { description: "Background removal" },
+    { description: "2x upscaling" },
+  ],
+}
+
+async function getProducts() {
+  try {
+    const result = await polar.products.list({
+      limit: 100,
+      isArchived: false,
+    })
+    return result.result.items
+  } catch (error) {
+    console.error("Error fetching products:", error)
+    return []
+  }
+}
+
+function formatPrice(amount: number, currency: string) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: currency.toUpperCase(),
+    minimumFractionDigits: 0,
+  }).format(amount / 100)
+}
 
 export default async function BillingPage({
   searchParams,
@@ -58,7 +70,8 @@ export default async function BillingPage({
     .order("created_at", { ascending: false })
     .limit(10)
 
-  const polarConfigured = POLAR_PRO_PRODUCT_ID && POLAR_ENTERPRISE_PRODUCT_ID
+  const products = await getProducts()
+  const hasProducts = products.length > 0
 
   return (
     <div className="mx-auto max-w-5xl space-y-8">
@@ -92,13 +105,6 @@ export default async function BillingPage({
               ? "Checkout failed. Please try again or contact support."
               : "An error occurred. Please try again."}
           </AlertDescription>
-        </Alert>
-      )}
-
-      {!polarConfigured && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>Payment system is being configured. Upgrades will be available soon.</AlertDescription>
         </Alert>
       )}
 
@@ -145,76 +151,158 @@ export default async function BillingPage({
           <CardDescription>Get more credits and unlock premium features</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-6 md:grid-cols-3">
-            {plans.map((plan) => {
-              const isCurrentPlan = profile?.plan === plan.name.toLowerCase()
-              const canUpgrade = plan.productId && polarConfigured
+          {hasProducts ? (
+            <Tabs defaultValue="monthly" className="w-full">
+              <div className="flex justify-center mb-6">
+                <TabsList>
+                  <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                  <TabsTrigger value="yearly">Yearly (Save 20%)</TabsTrigger>
+                </TabsList>
+              </div>
 
-              return (
-                <div
-                  key={plan.name}
-                  className={cn(
-                    "relative rounded-2xl border-2 p-6 transition-all",
-                    plan.popular
-                      ? "border-primary shadow-lg shadow-primary/10 scale-[1.02]"
-                      : "border-border hover:border-border/80",
-                    isCurrentPlan && "bg-muted/30",
-                  )}
-                >
-                  {plan.popular && (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 shadow-sm">
-                      <Sparkles className="h-3 w-3 mr-1" />
-                      Most Popular
-                    </Badge>
-                  )}
-
-                  <div className="mb-6">
-                    <h3 className="font-semibold text-lg">{plan.name}</h3>
-                    <div className="mt-2 flex items-baseline gap-1">
-                      <span className="text-4xl font-bold">${plan.price}</span>
-                      {plan.price > 0 && <span className="text-muted-foreground">/month</span>}
-                    </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {plan.credits} credits {plan.price > 0 ? "per month" : "to start"}
-                    </p>
-                  </div>
-
-                  <ul className="mb-6 space-y-3">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-center gap-2.5 text-sm">
-                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15">
-                          <Check className="h-3 w-3 text-primary" />
-                        </div>
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-
-                  {isCurrentPlan ? (
-                    <Button variant="outline" className="w-full bg-transparent" disabled>
-                      Current Plan
-                    </Button>
-                  ) : canUpgrade ? (
-                    <Button
-                      asChild
-                      variant={plan.popular ? "default" : "outline"}
-                      className={cn("w-full", !plan.popular && "bg-transparent")}
+              {["monthly", "yearly"].map((interval) => (
+                <TabsContent key={interval} value={interval}>
+                  <div className="grid gap-6 md:grid-cols-3">
+                    {/* Free Plan */}
+                    <div
+                      className={cn(
+                        "relative rounded-2xl border-2 p-6 transition-all border-border hover:border-border/80",
+                        profile?.plan === "free" && "bg-muted/30"
+                      )}
                     >
-                      <Link href={`/api/checkout?product=${plan.productId}`}>Upgrade to {plan.name}</Link>
-                    </Button>
-                  ) : plan.price === 0 ? (
-                    <Button variant="outline" className="w-full bg-transparent" disabled>
-                      Free Tier
-                    </Button>
-                  ) : (
-                    <Button variant="outline" className="w-full bg-transparent" disabled>
-                      Coming Soon
-                    </Button>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+                      <div className="mb-6">
+                        <h3 className="font-semibold text-lg">Free</h3>
+                        <div className="mt-2 flex items-baseline gap-1">
+                          <span className="text-4xl font-bold">$0</span>
+                        </div>
+                        <p className="mt-1 text-sm text-muted-foreground">10 credits to start</p>
+                      </div>
+
+                      <ul className="mb-6 space-y-3">
+                        {freePlan.benefits.map((benefit) => (
+                          <li key={benefit.description} className="flex items-center gap-2.5 text-sm">
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15">
+                              <Check className="h-3 w-3 text-primary" />
+                            </div>
+                            {benefit.description}
+                          </li>
+                        ))}
+                      </ul>
+
+                      <Button variant="outline" className="w-full bg-transparent" disabled>
+                        {profile?.plan === "free" ? "Current Plan" : "Free Tier"}
+                      </Button>
+                    </div>
+
+                    {/* Dynamic Plans from Polar */}
+                    {products
+                      .filter((product) => {
+                        const hasMatchingPrice = product.prices.some((price) => {
+                          if (price.type === "recurring" && "recurringInterval" in price) {
+                            return interval === "monthly"
+                              ? price.recurringInterval === "month"
+                              : price.recurringInterval === "year"
+                          }
+                          return false
+                        })
+                        return hasMatchingPrice
+                      })
+                      .map((product, index) => {
+                        const price = product.prices.find((p) => {
+                          if (p.type === "recurring" && "recurringInterval" in p) {
+                            return interval === "monthly"
+                              ? p.recurringInterval === "month"
+                              : p.recurringInterval === "year"
+                          }
+                          return false
+                        })
+
+                        const priceAmount =
+                          price && price.amountType === "fixed" && "priceAmount" in price ? price.priceAmount : 0
+                        const priceCurrency =
+                          price && price.amountType === "fixed" && "priceCurrency" in price
+                            ? price.priceCurrency
+                            : "usd"
+
+                        const isPopular = index === 0 // First paid plan is popular
+                        const isCurrentPlan = profile?.plan?.toLowerCase() === product.name.toLowerCase()
+
+                        return (
+                          <div
+                            key={product.id}
+                            className={cn(
+                              "relative rounded-2xl border-2 p-6 transition-all",
+                              isPopular
+                                ? "border-primary shadow-lg shadow-primary/10 scale-[1.02]"
+                                : "border-border hover:border-border/80",
+                              isCurrentPlan && "bg-muted/30"
+                            )}
+                          >
+                            {isPopular && (
+                              <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 shadow-sm">
+                                <Sparkles className="h-3 w-3 mr-1" />
+                                Most Popular
+                              </Badge>
+                            )}
+
+                            <div className="mb-6">
+                              <h3 className="font-semibold text-lg">{product.name}</h3>
+                              <div className="mt-2 flex items-baseline gap-1">
+                                <span className="text-4xl font-bold">
+                                  {formatPrice(priceAmount, priceCurrency)}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  /{interval === "monthly" ? "month" : "year"}
+                                </span>
+                              </div>
+                              {product.description && (
+                                <p className="mt-1 text-sm text-muted-foreground">{product.description}</p>
+                              )}
+                            </div>
+
+                            <ul className="mb-6 space-y-3">
+                              {product.benefits.map((benefit) => (
+                                <li key={benefit.id} className="flex items-center gap-2.5 text-sm">
+                                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/15">
+                                    <Check className="h-3 w-3 text-primary" />
+                                  </div>
+                                  {benefit.description}
+                                </li>
+                              ))}
+                            </ul>
+
+                            {isCurrentPlan ? (
+                              <Button variant="outline" className="w-full bg-transparent" disabled>
+                                Current Plan
+                              </Button>
+                            ) : (
+                              <Button
+                                asChild
+                                variant={isPopular ? "default" : "outline"}
+                                className={cn("w-full", !isPopular && "bg-transparent")}
+                              >
+                                <Link href={`/api/checkout?priceId=${price?.id}`}>
+                                  Upgrade to {product.name}
+                                </Link>
+                              </Button>
+                            )}
+                          </div>
+                        )
+                      })}
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+          ) : (
+            <div className="text-center py-8">
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  Payment system is being configured. Upgrades will be available soon.
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -252,7 +340,7 @@ export default async function BillingPage({
                     <div
                       className={cn(
                         "flex h-10 w-10 items-center justify-center rounded-xl",
-                        tx.amount > 0 ? "bg-accent/15" : "bg-muted",
+                        tx.amount > 0 ? "bg-accent/15" : "bg-muted"
                       )}
                     >
                       <Zap className={cn("h-5 w-5", tx.amount > 0 ? "text-accent" : "text-muted-foreground")} />
