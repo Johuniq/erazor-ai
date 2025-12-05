@@ -99,9 +99,6 @@ export const UseCases = () => {
 
 
   const currentUseCase = useCases[activeCategory as keyof typeof useCases];
-  const activeColor =
-    categories.find((cat) => cat.id === activeCategory)?.color ||
-    'from-orange-500 to-purple-600';
 
   return (
     <section id='use-cases' className='py-24'>
@@ -125,12 +122,13 @@ export const UseCases = () => {
           {categories.map((category) => (
             <Button
               key={category.id}
+              variant={activeCategory === category.id ? "default" : "outline"}
               onClick={() => setActiveCategory(category.id)}
               className={cn(
                 'group relative rounded-lg px-4 py-2 font-medium transition-all duration-300',
                 activeCategory === category.id
                   ? 'text-white shadow-lg'
-                  : 'text-foreground/70 hover:text-foreground border border-gray-200/50 bg-white/50 hover:border-orange-500/30 dark:border-gray-800/50 dark:bg-black/20'
+                  : 'text-foreground/70 hover:text-white'
               )}
             >
 

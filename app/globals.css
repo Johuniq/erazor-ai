@@ -172,3 +172,13 @@ html {
 .animate-marquee {
   animation: marquee var(--duration, 20s) linear infinite;
 }
+
+/* Shimmer Animation for banners */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
