@@ -7,16 +7,17 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import type { Profile } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import {
-    ChevronRight,
-    CreditCard,
-    Eraser,
-    HelpCircle,
-    History,
-    ImageMinus,
-    Maximize2,
-    Menu,
-    Settings,
-    Sparkles,
+  ChevronRight,
+  CreditCard,
+  Eraser,
+  HelpCircle,
+  History,
+  ImageMinus,
+  LayoutDashboard,
+  Maximize2,
+  Menu,
+  Settings,
+  Sparkles,
 } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
@@ -27,6 +28,7 @@ interface DashboardSidebarProps {
 }
 
 const navigation = [
+  { name: "Overview", href: "/dashboard/overview", icon: LayoutDashboard, description: "Dashboard summary" },
   { name: "Background Removal", href: "/dashboard", icon: ImageMinus, description: "Remove backgrounds" },
   { name: "Image Upscaling", href: "/dashboard/upscale", icon: Maximize2, description: "Enhance resolution" },
   { name: "History", href: "/dashboard/history", icon: History, description: "View past jobs" },
@@ -92,7 +94,10 @@ function SidebarContent({ profile, onNavigate }: { profile: Profile; onNavigate?
       <nav className="flex-1 px-3 py-2">
         <div className="space-y-1">
           {navigation.map((item) => {
-            const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))
+            const isActive =
+              item.href === "/dashboard"
+                ? pathname === "/dashboard"
+                : pathname === item.href || pathname.startsWith(item.href + "/")
             return (
               <Link
                 key={item.name}
@@ -135,7 +140,7 @@ function SidebarContent({ profile, onNavigate }: { profile: Profile; onNavigate?
       {/* Help - Enhanced */}
       <div className="border-t border-sidebar-border p-3">
         <Link
-          href="mailto:support@erazor.app"
+          href="mailto:support@erazor.ai"
           className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group"
           onClick={onNavigate}
         >
