@@ -15,33 +15,64 @@ const polar = new Polar({
   server: "production",
 })
 
-// Hardcoded benefits for each plan
-const planBenefits: Record<string, string[]> = {
-  free: [
-    "10 free credits",
-    "Background removal",
-    "Image upscaling (2x)",
-    "Standard quality",
-    "Community support",
-  ],
-  pro: [
-    "200 credits/month",
-    "Background removal",
-    "Image upscaling (4x)",
-    "HD quality export",
-    "Priority processing",
-    "Email support",
-    "History & downloads",
-  ],
-  enterprise: [
-    "2000 credits/month",
-    "Everything in Pro",
-    "Batch processing",
-    "API access",
-    "Custom integrations",
-    "Dedicated support",
-    "SLA guarantee",
-  ],
+// Hardcoded benefits for each plan (monthly and yearly)
+const planBenefits: Record<string, { monthly: string[]; yearly: string[] }> = {
+  free: {
+    monthly: [
+      "10 free credits",
+      "Background removal",
+      "Image upscaling (2x)",
+      "Standard quality",
+      "Community support",
+    ],
+    yearly: [
+      "10 free credits",
+      "Background removal",
+      "Image upscaling (2x)",
+      "Standard quality",
+      "Community support",
+    ],
+  },
+  pro: {
+    monthly: [
+      "100 credits/month",
+      "Background removal",
+      "Image upscaling (4x)",
+      "HD quality export",
+      "Priority processing",
+      "Email support",
+      "History & downloads",
+    ],
+    yearly: [
+      "1300 credits/year (~109/month)",
+      "Background removal",
+      "Image upscaling (4x)",
+      "HD quality export",
+      "Priority processing",
+      "Email support",
+      "History & downloads",
+    ],
+  },
+  enterprise: {
+    monthly: [
+      "200 credits/month",
+      "Everything in Pro",
+      "Batch processing",
+      "API access",
+      "Custom integrations",
+      "Dedicated support",
+      "SLA guarantee",
+    ],
+    yearly: [
+      "2500 credits/year (~209/month)",
+      "Everything in Pro",
+      "Batch processing",
+      "API access",
+      "Custom integrations",
+      "Dedicated support",
+      "SLA guarantee",
+    ],
+  },
 }
 
 // Free plan that's always shown
@@ -50,7 +81,7 @@ const freePlan = {
   name: "Free",
   description: "Try it out with no commitment",
   credits: "10 credits to start",
-  benefits: planBenefits.free,
+  benefits: planBenefits.free.monthly,
 }
 
 async function getProducts() {
@@ -260,7 +291,8 @@ export default async function BillingPage({
                           : productNameLower.includes("pro")
                             ? "pro"
                             : ""
-                        const benefits = planBenefits[planKey] || []
+                        const planBenefitSet = planBenefits[planKey]
+                        const benefits = planBenefitSet ? (interval === "yearly" ? planBenefitSet.yearly : planBenefitSet.monthly) : []
 
                         return (
                           <div

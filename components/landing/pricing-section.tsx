@@ -8,33 +8,64 @@ import { Check, Sparkles, Zap } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
-// Hardcoded benefits for each plan
-const planBenefits: Record<string, string[]> = {
-  free: [
-    "10 free credits",
-    "Background removal",
-    "Image upscaling (2x)",
-    "Standard quality",
-    "Community support",
-  ],
-  pro: [
-    "200 credits/month",
-    "Background removal",
-    "Image upscaling (4x)",
-    "HD quality export",
-    "Priority processing",
-    "Email support",
-    "History & downloads",
-  ],
-  enterprise: [
-    "2000 credits/month",
-    "Everything in Pro",
-    "Batch processing",
-    "API access",
-    "Custom integrations",
-    "Dedicated support",
-    "SLA guarantee",
-  ],
+// Hardcoded benefits for each plan (monthly and yearly)
+const planBenefits: Record<string, { monthly: string[]; yearly: string[] }> = {
+  free: {
+    monthly: [
+      "10 free credits",
+      "Background removal",
+      "Image upscaling (2x)",
+      "Standard quality",
+      "Community support",
+    ],
+    yearly: [
+      "10 free credits",
+      "Background removal",
+      "Image upscaling (2x)",
+      "Standard quality",
+      "Community support",
+    ],
+  },
+  pro: {
+    monthly: [
+      "100 credits/month",
+      "Background removal",
+      "Image upscaling (4x)",
+      "HD quality export",
+      "Priority processing",
+      "Email support",
+      "History & downloads",
+    ],
+    yearly: [
+      "1300 credits/year (~109/month)",
+      "Background removal",
+      "Image upscaling (4x)",
+      "HD quality export",
+      "Priority processing",
+      "Email support",
+      "History & downloads",
+    ],
+  },
+  enterprise: {
+    monthly: [
+      "200 credits/month",
+      "Everything in Pro",
+      "Batch processing",
+      "API access",
+      "Custom integrations",
+      "Dedicated support",
+      "SLA guarantee",
+    ],
+    yearly: [
+      "2500 credits/year (~209/month)",
+      "Everything in Pro",
+      "Batch processing",
+      "API access",
+      "Custom integrations",
+      "Dedicated support",
+      "SLA guarantee",
+    ],
+  },
 }
 
 // Free plan (always shown)
@@ -44,7 +75,7 @@ const freePlan = {
   monthlyPrice: 0,
   yearlyPrice: 0,
   credits: "10 credits to start",
-  features: planBenefits.free,
+  features: planBenefits.free.monthly,
   cta: "Get Started Free",
   href: "/signup",
 }
@@ -234,7 +265,8 @@ export function PricingSection() {
                 : productNameLower.includes("pro")
                   ? "pro"
                   : ""
-              const features = planBenefits[planKey] || []
+              const planBenefitSet = planBenefits[planKey]
+              const features = planBenefitSet ? (annual ? planBenefitSet.yearly : planBenefitSet.monthly) : []
 
               return (
                 <Card
@@ -263,7 +295,9 @@ export function PricingSection() {
                       <span className="text-muted-foreground">/{annual ? "year" : "month"}</span>
                     </div>
                     <p className="mb-6 text-sm text-muted-foreground">
-                      {planKey === "pro" ? "200 credits per month" : "2,000 credits per month"}
+                      {planKey === "pro" 
+                        ? (annual ? "1300 credits per year" : "100 credits per month") 
+                        : (annual ? "2500 credits per year" : "200 credits per month")}
                     </p>
                     <ul className="space-y-3">
                       {features.map((feature) => (
@@ -282,7 +316,7 @@ export function PricingSection() {
                     >
                       <Link href={`/signup?plan=${planKey}`}>
                         {isPopular && <Zap className="h-4 w-4" />}
-                        {isPopular ? "Start Pro Trial" : "Contact Sales"}
+                        Upgrade
                       </Link>
                     </Button>
                   </CardFooter>
