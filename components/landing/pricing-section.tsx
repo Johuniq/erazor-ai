@@ -3,68 +3,110 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { Check, Sparkles, Zap } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
-const plans = [
-  {
-    name: "Free",
-    description: "Try it out with no commitment",
-    monthlyPrice: 0,
-    yearlyPrice: 0,
-    credits: "10 credits to start",
-    features: [
-      "10 free credits",
-      "Background removal",
-      "Image upscaling (2x)",
-      "Standard quality",
-      "Community support",
-    ],
-    cta: "Get Started Free",
-    href: "/signup",
-  },
-  {
-    name: "Pro",
-    description: "For professionals and small teams",
-    monthlyPrice: 19,
-    yearlyPrice: 190,
-    credits: "200 credits per month",
-    features: [
-      "200 credits/month",
-      "Background removal",
-      "Image upscaling (4x)",
-      "HD quality export",
-      "Priority processing",
-      "Email support",
-      "History & downloads",
-    ],
-    cta: "Start Pro Trial",
-    href: "/signup?plan=pro",
-    popular: true,
-  },
-  {
-    name: "Enterprise",
-    description: "For large teams and businesses",
-    monthlyPrice: 99,
-    yearlyPrice: 990,
-    credits: "2,000 credits per month",
-    features: [
-      "2000 credits/month",
-      "Everything in Pro",
-      "Batch processing",
-      "API access",
-      "Custom integrations",
-      "Dedicated support",
-      "SLA guarantee",
-    ],
-    cta: "Contact Sales",
-    href: "/contact",
-  },
-]
+// Hardcoded benefits for each plan
+const planBenefits: Record<string, string[]> = {
+  free: [
+    "10 free credits",
+    "Background removal",
+    "Image upscaling (2x)",
+    "Standard quality",
+    "Community support",
+  ],
+  pro: [
+    "200 credits/month",
+    "Background removal",
+    "Image upscaling (4x)",
+    "HD quality export",
+    "Priority processing",
+    "Email support",
+    "History & downloads",
+  ],
+  enterprise: [
+    "2000 credits/month",
+    "Everything in Pro",
+    "Batch processing",
+    "API access",
+    "Custom integrations",
+    "Dedicated support",
+    "SLA guarantee",
+  ],
+}
+
+// Free plan (always shown)
+const freePlan = {
+  name: "Free",
+  description: "Try it out with no commitment",
+  monthlyPrice: 0,
+  yearlyPrice: 0,
+  credits: "10 credits to start",
+  features: planBenefits.free,
+  cta: "Get Started Free",
+  href: "/signup",
+}
+
+interface ProductPrice {
+  id: string
+  type: string
+  amountType: string
+  priceAmount: number | null
+  priceCurrency: string | null
+  recurringInterval: string | null
+}
+
+interface Product {
+  id: string
+  name: string
+  description: string | null
+  isRecurring: boolean
+  prices: ProductPrice[]
+}
+
+function formatPrice(amount: number) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+  }).format(amount / 100)
+}
 
 export function PricingSection() {
   const [annual, setAnnual] = useState(false)
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch("/api/products")
+        const data = await res.json()
+        if (data.products) {
+          setProducts(data.products)
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchProducts()
+  }, [])
+
+  // Filter products based on billing interval
+  const filteredProducts = products.filter((product) => {
+    return product.prices.some((price) => {
+      if (price.type === "recurring" && price.recurringInterval) {
+        return annual
+          ? price.recurringInterval === "year"
+          : price.recurringInterval === "month"
+      }
+      return false
+    })
+  })
 
   return (
     <section id="pricing" className="py-24 sm:py-32">
@@ -104,56 +146,150 @@ export function PricingSection() {
         </div>
 
         <div className="mt-12 grid gap-8 lg:grid-cols-3">
-          {plans.map((plan) => (
-            <Card
-              key={plan.name}
-              className={`relative flex flex-col transition-all duration-300 ${
-                plan.popular
-                  ? "border-primary shadow-xl shadow-primary/10 scale-[1.02]"
-                  : "border-border/50 hover:border-border hover:shadow-lg"
-              }`}
-            >
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <Badge className="gap-1.5 px-4 py-1.5 shadow-lg">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    Most Popular
-                  </Badge>
-                </div>
-              )}
-              <CardHeader className={plan.popular ? "pt-10" : ""}>
-                <CardTitle className="text-xl">{plan.name}</CardTitle>
-                <CardDescription>{plan.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1">
-                <div className="mb-2">
-                  <span className="text-4xl font-bold">${annual ? plan.yearlyPrice : plan.monthlyPrice}</span>
-                  {plan.monthlyPrice > 0 && <span className="text-muted-foreground">/{annual ? "year" : "month"}</span>}
-                </div>
-                <p className="mb-6 text-sm text-muted-foreground">{plan.credits}</p>
-                <ul className="space-y-3">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3">
-                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </CardContent>
-              <CardFooter>
-                <Button
-                  asChild
-                  className={`w-full gap-2 ${plan.popular ? "shadow-lg" : ""}`}
-                  variant={plan.popular ? "default" : "outline"}
+          {/* Free Plan - Always shown */}
+          <Card className="relative flex flex-col transition-all duration-300 border-border/50 hover:border-border hover:shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-xl">{freePlan.name}</CardTitle>
+              <CardDescription>{freePlan.description}</CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1">
+              <div className="mb-2">
+                <span className="text-4xl font-bold">$0</span>
+              </div>
+              <p className="mb-6 text-sm text-muted-foreground">{freePlan.credits}</p>
+              <ul className="space-y-3">
+                {freePlan.features.map((feature) => (
+                  <li key={feature} className="flex items-start gap-3">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                    <span className="text-sm">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+            <CardFooter>
+              <Button asChild className="w-full gap-2" variant="outline">
+                <Link href={freePlan.href}>{freePlan.cta}</Link>
+              </Button>
+            </CardFooter>
+          </Card>
+
+          {/* Dynamic Plans from API */}
+          {loading ? (
+            <>
+              <Card className="relative flex flex-col">
+                <CardHeader className="pt-10">
+                  <Skeleton className="h-6 w-24" />
+                  <Skeleton className="h-4 w-48 mt-2" />
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <Skeleton className="h-10 w-32 mb-2" />
+                  <Skeleton className="h-4 w-40 mb-6" />
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Skeleton key={i} className="h-4 w-full" />
+                    ))}
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Skeleton className="h-10 w-full" />
+                </CardFooter>
+              </Card>
+              <Card className="relative flex flex-col">
+                <CardHeader>
+                  <Skeleton className="h-6 w-24" />
+                  <Skeleton className="h-4 w-48 mt-2" />
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <Skeleton className="h-10 w-32 mb-2" />
+                  <Skeleton className="h-4 w-40 mb-6" />
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <Skeleton key={i} className="h-4 w-full" />
+                    ))}
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Skeleton className="h-10 w-full" />
+                </CardFooter>
+              </Card>
+            </>
+          ) : (
+            filteredProducts.map((product, index) => {
+              const price = product.prices.find((p) => {
+                if (p.type === "recurring" && p.recurringInterval) {
+                  return annual
+                    ? p.recurringInterval === "year"
+                    : p.recurringInterval === "month"
+                }
+                return false
+              })
+
+              const priceAmount = price?.priceAmount || 0
+              const isPopular = index === 0
+
+              // Get hardcoded benefits based on product name
+              const productNameLower = product.name.toLowerCase()
+              const planKey = productNameLower.includes("enterprise")
+                ? "enterprise"
+                : productNameLower.includes("pro")
+                  ? "pro"
+                  : ""
+              const features = planBenefits[planKey] || []
+
+              return (
+                <Card
+                  key={product.id}
+                  className={`relative flex flex-col transition-all duration-300 ${
+                    isPopular
+                      ? "border-primary shadow-xl shadow-primary/10 scale-[1.02]"
+                      : "border-border/50 hover:border-border hover:shadow-lg"
+                  }`}
                 >
-                  <Link href={plan.href}>
-                    {plan.popular && <Zap className="h-4 w-4" />}
-                    {plan.cta}
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+                  {isPopular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                      <Badge className="gap-1.5 px-4 py-1.5 shadow-lg">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Most Popular
+                      </Badge>
+                    </div>
+                  )}
+                  <CardHeader className={isPopular ? "pt-10" : ""}>
+                    <CardTitle className="text-xl">{product.name}</CardTitle>
+                    {product.description && <CardDescription>{product.description}</CardDescription>}
+                  </CardHeader>
+                  <CardContent className="flex-1">
+                    <div className="mb-2">
+                      <span className="text-4xl font-bold">{formatPrice(priceAmount)}</span>
+                      <span className="text-muted-foreground">/{annual ? "year" : "month"}</span>
+                    </div>
+                    <p className="mb-6 text-sm text-muted-foreground">
+                      {planKey === "pro" ? "200 credits per month" : "2,000 credits per month"}
+                    </p>
+                    <ul className="space-y-3">
+                      {features.map((feature) => (
+                        <li key={feature} className="flex items-start gap-3">
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+                          <span className="text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                  <CardFooter>
+                    <Button
+                      asChild
+                      className={`w-full gap-2 ${isPopular ? "shadow-lg" : ""}`}
+                      variant={isPopular ? "default" : "outline"}
+                    >
+                      <Link href={`/signup?plan=${planKey}`}>
+                        {isPopular && <Zap className="h-4 w-4" />}
+                        {isPopular ? "Start Pro Trial" : "Contact Sales"}
+                      </Link>
+                    </Button>
+                  </CardFooter>
+                </Card>
+              )
+            })
+          )}
         </div>
 
         <p className="mt-12 text-center text-sm text-muted-foreground">
