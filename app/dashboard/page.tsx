@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
 import { ImageUpload } from "@/components/dashboard/image-upload"
 import { ProcessingResult } from "@/components/dashboard/processing-result"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ImageMinus, Sparkles, Lightbulb, Zap, ImageIcon } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
+import { getFileSizeLimit } from "@/lib/utils"
+import { ImageIcon, ImageMinus, Lightbulb, Sparkles, Zap } from "lucide-react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 type ProcessingState = "idle" | "uploading" | "processing" | "complete" | "error"
@@ -13,6 +15,27 @@ export default function BackgroundRemovalPage() {
   const [state, setState] = useState<ProcessingState>("idle")
   const [originalUrl, setOriginalUrl] = useState<string>("")
   const [resultUrl, setResultUrl] = useState<string>("")
+  const [userPlan, setUserPlan] = useState<string>("free")
+
+  useEffect(() => {
+    async function fetchUserPlan() {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("plan")
+          .eq("id", user.id)
+          .single()
+        if (profile?.plan) {
+          setUserPlan(profile.plan)
+        }
+      }
+    }
+    fetchUserPlan()
+  }, [])
+
+  const maxFileSize = getFileSizeLimit(userPlan)
 
   const handleUpload = async (file: File) => {
     setState("uploading")
@@ -93,7 +116,7 @@ export default function BackgroundRemovalPage() {
             <ProcessingResult originalUrl={originalUrl} resultUrl={resultUrl} onReset={handleReset} />
           ) : (
             <div className="space-y-4">
-              <ImageUpload onUpload={handleUpload} isProcessing={state === "uploading" || state === "processing"} />
+              <ImageUpload onUpload={handleUpload} isProcessing={state === "uploading" || state === "processing"} maxSize={maxFileSize} />
               {(state === "uploading" || state === "processing") && (
                 <div className="flex items-center justify-center gap-3 rounded-xl bg-primary/5 border border-primary/20 p-5">
                   <div className="relative">

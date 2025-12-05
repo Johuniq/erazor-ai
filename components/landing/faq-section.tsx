@@ -3,36 +3,77 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 
 const faqs = [
-  {
-    question: "How many free credits do I get?",
+   {
+    id: '1',
+    question: 'How accurate is the AI background removal?',
     answer:
-      "New users get 10 free credits upon signup. Anonymous users can try the tool with 3 free credits without creating an account.",
+      'Our AI achieves 99.9% accuracy in background removal. Using advanced neural networks, it can precisely identify subjects and remove backgrounds while preserving fine details like hair, fur, and complex edges.',
+    category: 'technical'
   },
   {
-    question: "What image formats are supported?",
+    id: '2',
+    question: 'What file formats are supported?',
     answer:
-      "We support JPG, PNG, and WebP formats for uploads. All processed images are exported as high-quality PNG files with transparency support.",
+      'We support JPG, PNG, and WEBP formats for uploads. You can download your results as high-quality PNG files with transparency or add custom backgrounds.',
+    category: 'technical'
   },
   {
-    question: "How long are my images stored?",
+    id: '3',
+    question: 'How fast is the processing time?',
     answer:
-      "For privacy, all uploaded and processed images are automatically deleted from our servers within 24 hours. We recommend downloading your results immediately.",
+      'Most images are processed in just 3 seconds! Our optimized AI models and cloud infrastructure ensure lightning-fast results without compromising quality.',
+    category: 'general'
   },
   {
-    question: "Can I use Erazor AI for commercial projects?",
+    id: '4',
+    question: 'Is there a file size limit?',
     answer:
-      "Yes! All processed images are yours to use for any purpose, including commercial projects. You retain full rights to your images.",
+      'Free users can upload files up to 10MB. Pro users get higher limits up to 50MB, and can process 4K resolution images for professional quality output.',
+    category: 'general'
   },
   {
-    question: "What's the maximum image size I can upload?",
+    id: '5',
+    question: 'What happens to my uploaded images?',
     answer:
-      "Free users can upload images up to 10MB. Pro and Enterprise users can upload images up to 50MB. For best results, we recommend images with at least 1000 pixels on the longest side.",
+      'Your privacy is our priority. Images are processed securely and automatically deleted from our servers after 24 hours. We never store or share your content.',
+    category: 'support'
   },
   {
-    question: "Do credits expire?",
+    id: '6',
+    question: 'Can I cancel my subscription anytime?',
     answer:
-      "Credits on the free plan never expire. For subscription plans, unused credits reset at the beginning of each billing cycle.",
+      'Yes! You can cancel your subscription at any time with no cancellation fees. Your plan remains active until the end of your billing period.',
+    category: 'pricing'
   },
+  {
+    id: '7',
+    question: 'Do unused credits roll over?',
+    answer:
+      'No, unused credits do not roll over to the next billing period. Credits reset monthly for all plans, so we recommend using your credits within the month to get the most value from your subscription.',
+    category: 'pricing'
+  },
+  {
+    id: '8',
+    question: 'Can I use this for commercial purposes?',
+    answer:
+      'Absolutely! All our plans include commercial usage rights. You can use the processed images for business, e-commerce, marketing, and any commercial projects.',
+    category: 'general'
+  },
+  {
+    id: '9',
+    question: 'How do I get started?',
+    answer:
+      'Simply upload your image, and our AI will automatically remove the background in seconds. No sign-up required for your first try! Create an account to access more features and credits.',
+    category: 'general'
+  },
+  {
+    id: '10',
+    question: 'How do I contact support?',
+    answer:
+      'You can reach our support team through the contact form on our website, email us directly, or use the live chat feature. Pro users get priority support response.',
+    category: 'support'
+  }
+
 ]
 
 export function FAQSection() {
@@ -48,8 +89,8 @@ export function FAQSection() {
         </div>
 
         <Accordion type="single" collapsible className="mt-12">
-          {faqs.map((faq, index) => (
-            <AccordionItem key={index} value={`item-${index}`}>
+          {faqs.map((faq) => (
+            <AccordionItem key={faq.id} value={`item-${faq.id}`}>
               <AccordionTrigger className="text-left text-base font-medium">{faq.question}</AccordionTrigger>
               <AccordionContent className="text-muted-foreground leading-relaxed">{faq.answer}</AccordionContent>
             </AccordionItem>

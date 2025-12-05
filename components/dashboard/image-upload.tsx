@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useCallback } from "react"
-import { useDropzone } from "react-dropzone"
-import { X, ImageIcon, CloudUpload, FileImage } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { cn, formatFileSize } from "@/lib/utils"
+import { CloudUpload, FileImage, ImageIcon, X } from "lucide-react"
 import Image from "next/image"
+import { useCallback, useState } from "react"
+import { useDropzone } from "react-dropzone"
 
 interface ImageUploadProps {
   onUpload: (file: File) => void
@@ -22,12 +22,23 @@ export function ImageUpload({
     "image/png": [".png"],
     "image/webp": [".webp"],
   },
-  maxSize = 10 * 1024 * 1024,
+  maxSize = 2 * 1024 * 1024, // Default to free plan limit
 }: ImageUploadProps) {
   const [preview, setPreview] = useState<string | null>(null)
   const [file, setFile] = useState<File | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
+  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: { errors: { code: string }[] }[]) => {
+    setError(null)
+    
+    if (rejectedFiles.length > 0) {
+      const rejection = rejectedFiles[0]
+      if (rejection.errors.some(e => e.code === "file-too-large")) {
+        setError(`File is too large. Maximum size is ${formatFileSize(maxSize)}. Upgrade your plan for larger uploads.`)
+        return
+      }
+    }
+    
     const selectedFile = acceptedFiles[0]
     if (selectedFile) {
       setFile(selectedFile)
@@ -37,7 +48,7 @@ export function ImageUpload({
       }
       reader.readAsDataURL(selectedFile)
     }
-  }, [])
+  }, [maxSize])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -50,6 +61,7 @@ export function ImageUpload({
   const clearImage = () => {
     setFile(null)
     setPreview(null)
+    setError(null)
   }
 
   const handleProcess = () => {
@@ -108,7 +120,13 @@ export function ImageUpload({
                 </span>
               ))}
             </div>
-            <p className="mt-3 text-xs text-muted-foreground">Maximum file size: 10MB</p>
+            <p className="mt-3 text-xs text-muted-foreground">Maximum file size: {formatFileSize(maxSize)}</p>
+            
+            {error && (
+              <div className="mt-4 rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 text-sm text-destructive">
+                {error}
+              </div>
+            )}
           </div>
         </div>
       ) : (
