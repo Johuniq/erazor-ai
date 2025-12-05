@@ -36,28 +36,14 @@ export async function GET() {
       }
     }
 
-    try {
-      const session = await polar.customerSessions.create({
-        externalCustomerId: user.id,
-      });
+    // Use customerId which is more reliable
+    const session = await polar.customerSessions.create({
+      customerId: customer.id,
+    });
 
-      return NextResponse.json({
-        url: session.customerPortalUrl,
-      });
-    } catch (sessionError) {
-      // Try with customer ID instead if externalCustomerId fails
-      if (customer && customer.id) {
-        try {
-          const sessionRetry = await polar.customerSessions.create({
-            customerId: customer.id,
-          });
-          return NextResponse.json({ url: sessionRetry.customerPortalUrl });
-        } catch (retryError) {
-          throw retryError;
-        }
-      }
-      throw sessionError;
-    }
+    return NextResponse.json({
+      url: session.customerPortalUrl,
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
 

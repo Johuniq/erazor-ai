@@ -174,7 +174,7 @@ export default async function BillingPage({
             <CardDescription>Your subscription details</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between rounded-xl border border-border bg-background p-5">
+            <div className="flex items-center justify-between rounded-xl border border-border bg-background px-5 py-3">
               <div className="flex items-center gap-4">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
                   <Zap className="h-7 w-7 text-primary" />
