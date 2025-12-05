@@ -3,8 +3,7 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Prevent trailing slash redirects for webhooks
-  skipTrailingSlashRedirect: true,
+
 images: {
     remotePatterns: [
       {
