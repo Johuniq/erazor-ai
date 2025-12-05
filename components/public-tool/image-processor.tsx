@@ -1,0 +1,291 @@
+"use client"
+
+import { useState, useCallback, useEffect } from "react"
+import { useDropzone } from "react-dropzone"
+import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
+import { Upload, ImageIcon, Download, Loader2, X, Sparkles, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react"
+import { generateFingerprint } from "@/lib/fingerprint"
+import Link from "next/link"
+
+interface ImageProcessorProps {
+  type: "bg_removal" | "upscale"
+  title: string
+  description: string
+}
+
+export function ImageProcessor({ type, title, description }: ImageProcessorProps) {
+  const [file, setFile] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [processing, setProcessing] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [result, setResult] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [credits, setCredits] = useState<number | null>(null)
+  const [requiresSignup, setRequiresSignup] = useState(false)
+  const [fingerprint, setFingerprint] = useState<string | null>(null)
+
+  // Generate fingerprint on mount
+  useEffect(() => {
+    generateFingerprint().then(setFingerprint)
+  }, [])
+
+  // Check credits on mount
+  useEffect(() => {
+    if (!fingerprint) return
+
+    fetch("/api/public/credits", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ fingerprint }),
+    })
+      .then((res) => res.json())
+      .then((data) => setCredits(data.credits))
+      .catch(() => setCredits(3))
+  }, [fingerprint])
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    const file = acceptedFiles[0]
+    if (file) {
+      setFile(file)
+      setPreview(URL.createObjectURL(file))
+      setResult(null)
+      setError(null)
+      setRequiresSignup(false)
+    }
+  }, [])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      "image/jpeg": [".jpg", ".jpeg"],
+      "image/png": [".png"],
+      "image/webp": [".webp"],
+    },
+    maxFiles: 1,
+    maxSize: 10 * 1024 * 1024, // 10MB
+  })
+
+  const processImage = async () => {
+    if (!file || !fingerprint) return
+
+    setProcessing(true)
+    setProgress(10)
+    setError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append("image", file)
+      formData.append("type", type)
+      formData.append("fingerprint", fingerprint)
+
+      const response = await fetch("/api/public/process", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        if (data.requiresSignup) {
+          setRequiresSignup(true)
+          setCredits(0)
+        }
+        throw new Error(data.message || "Processing failed")
+      }
+
+      setProgress(30)
+      setCredits(data.credits_remaining)
+
+      // Poll for result
+      const jobId = data.job_id
+      let attempts = 0
+      const maxAttempts = 60
+
+      while (attempts < maxAttempts) {
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        setProgress(Math.min(30 + (attempts / maxAttempts) * 60, 90))
+
+        const statusRes = await fetch(`/api/public/process/${jobId}?type=${type}`)
+        const statusData = await statusRes.json()
+
+        if (statusData.status === "completed" && statusData.result_url) {
+          setResult(statusData.result_url)
+          setProgress(100)
+          break
+        } else if (statusData.status === "failed") {
+          throw new Error("Processing failed")
+        }
+
+        attempts++
+      }
+
+      if (attempts >= maxAttempts) {
+        throw new Error("Processing timed out")
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "An error occurred")
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const reset = () => {
+    setFile(null)
+    setPreview(null)
+    setResult(null)
+    setError(null)
+    setProgress(0)
+    setRequiresSignup(false)
+  }
+
+  const downloadResult = async () => {
+    if (!result) return
+
+    try {
+      const response = await fetch(result)
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `erazor-${type}-${Date.now()}.png`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch {
+      // Fallback: open in new tab
+      window.open(result, "_blank")
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Credits Badge */}
+      <div className="flex items-center justify-between">
+        <Badge variant={credits === 0 ? "destructive" : "secondary"} className="text-sm">
+          {credits !== null ? `${credits} credits remaining` : "Loading..."}
+        </Badge>
+        {credits !== null && credits < 3 && (
+          <Link href="/signup" className="text-sm text-primary hover:underline">
+            Sign up for more credits
+          </Link>
+        )}
+      </div>
+
+      {/* Upload Area */}
+      {!preview && (
+        <Card
+          {...getRootProps()}
+          className={`relative cursor-pointer border-2 border-dashed p-12 text-center transition-all ${
+            isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/50"
+          }`}
+        >
+          <input {...getInputProps()} />
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+              <Upload className="h-8 w-8 text-primary" />
+            </div>
+            <div>
+              <p className="text-lg font-medium">{isDragActive ? "Drop your image here" : "Drag & drop your image"}</p>
+              <p className="mt-1 text-sm text-muted-foreground">or click to browse (JPG, PNG, WebP up to 10MB)</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Preview & Processing */}
+      {preview && !result && (
+        <Card className="overflow-hidden">
+          <div className="relative aspect-video bg-muted">
+            <img src={preview || "/placeholder.svg"} alt="Preview" className="h-full w-full object-contain" />
+            <Button variant="secondary" size="icon" className="absolute right-4 top-4" onClick={reset}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="border-t border-border p-4">
+            {processing ? (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                  <span className="text-sm font-medium">Processing your image...</span>
+                </div>
+                <Progress value={progress} className="h-2" />
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="text-sm">{error}</span>
+                </div>
+                {requiresSignup ? (
+                  <Button asChild>
+                    <Link href="/signup">
+                      Sign up for more
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button onClick={processImage}>Try Again</Button>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">{file?.name}</p>
+                    <p className="text-xs text-muted-foreground">{file && (file.size / 1024 / 1024).toFixed(2)} MB</p>
+                  </div>
+                </div>
+                <Button onClick={processImage} disabled={credits === 0} className="gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  {type === "bg_removal" ? "Remove Background" : "Upscale Image"}
+                </Button>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
+      {/* Result */}
+      {result && (
+        <Card className="overflow-hidden">
+          <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-4">
+            <div className="flex items-center gap-2 text-primary">
+              <CheckCircle2 className="h-5 w-5" />
+              <span className="font-medium">Processing complete!</span>
+            </div>
+          </div>
+          <div className="grid gap-4 p-4 md:grid-cols-2">
+            {/* Before */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-muted-foreground">Original</p>
+              <div className="aspect-square overflow-hidden rounded-lg border border-border bg-muted">
+                <img src={preview! || "/placeholder.svg"} alt="Original" className="h-full w-full object-contain" />
+              </div>
+            </div>
+            {/* After */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-primary">Processed</p>
+              <div className="aspect-square overflow-hidden rounded-lg border-2 border-primary/20 bg-[repeating-conic-gradient(oklch(0.96_0.005_265)_0%_25%,transparent_0%_50%)] bg-[length:16px_16px]">
+                <img src={result || "/placeholder.svg"} alt="Processed" className="h-full w-full object-contain" />
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center justify-between border-t border-border p-4">
+            <Button variant="outline" onClick={reset}>
+              Process Another
+            </Button>
+            <Button onClick={downloadResult} className="gap-2">
+              <Download className="h-4 w-4" />
+              Download Result
+            </Button>
+          </div>
+        </Card>
+      )}
+    </div>
+  )
+}
