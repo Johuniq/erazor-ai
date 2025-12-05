@@ -1,3 +1,4 @@
+import { ManageSubscriptionButton } from "@/components/dashboard/manage-subscription-button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -190,12 +191,17 @@ export default async function BillingPage({
                   </p>
                 </div>
               </div>
-              <Button variant="outline" asChild>
-                <Link href="#plans" className="gap-1.5">
-                  Manage Plan
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
+              <div className="flex items-center gap-2">
+                {profile?.plan && profile.plan !== "free" && (
+                  <ManageSubscriptionButton />
+                )}
+                <Button variant="outline" asChild>
+                  <Link href="#plans" className="gap-1.5">
+                    Manage Plan
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
             </div>
           </CardContent>
         </div>
@@ -282,15 +288,17 @@ export default async function BillingPage({
                             : "usd"
 
                         const isPopular = index === 0
-                        const isCurrentPlan = profile?.plan?.toLowerCase() === product.name.toLowerCase()
-
-                        // Use hardcoded benefits based on product name (match "pro" or "enterprise" in name)
+                        
+                        // Check if this is the current plan by comparing plan key with profile plan
                         const productNameLower = product.name.toLowerCase()
                         const planKey = productNameLower.includes("enterprise")
                           ? "enterprise"
                           : productNameLower.includes("pro")
                             ? "pro"
                             : ""
+                        const isCurrentPlan = profile?.plan?.toLowerCase() === planKey
+                        
+                        // Use hardcoded benefits based on product name (match "pro" or "enterprise" in name)
                         const planBenefitSet = planBenefits[planKey]
                         const benefits = planBenefitSet ? (interval === "yearly" ? planBenefitSet.yearly : planBenefitSet.monthly) : []
 
