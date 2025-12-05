@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = "https://www.erazor.app";
-  const lastModified = new Date("2024-12-05");
+  const lastModified = new Date();
 
   return [
     {
@@ -22,12 +22,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       changeFrequency: "weekly",
       priority: 0.95,
-    },
-    {
-      url: `${baseUrl}/#pricing`,
-      lastModified,
-      changeFrequency: "monthly",
-      priority: 0.9,
     },
     {
       url: `${baseUrl}/about`,

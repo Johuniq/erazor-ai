@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils"
 import {
   ChevronRight,
   CreditCard,
-  Eraser,
   HelpCircle,
   History,
   ImageMinus,
@@ -19,6 +18,7 @@ import {
   Settings,
   Sparkles,
 } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
@@ -48,9 +48,7 @@ function SidebarContent({ profile, onNavigate }: { profile: Profile; onNavigate?
       {/* Logo */}
       <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-5">
         <Link href="/" className="flex items-center gap-2.5 group" onClick={onNavigate}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-sm transition-transform group-hover:scale-105">
-            <Eraser className="h-5 w-5 text-primary-foreground" />
-          </div>
+          <Image src="/logo.png" alt="Erazor AI" width={30} height={30} className="rounded-xl shadow-sm transition-transform group-hover:scale-105" />
           <span className="text-lg font-bold tracking-tight">Erazor AI</span>
         </Link>
       </div>

@@ -1,14 +1,14 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
-import { useDropzone } from "react-dropzone"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Upload, ImageIcon, Download, Loader2, X, Sparkles, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react"
 import { generateFingerprint } from "@/lib/fingerprint"
+import { AlertCircle, ArrowRight, CheckCircle2, Download, ImageIcon, Loader2, Sparkles, Upload, X } from "lucide-react"
 import Link from "next/link"
+import { useCallback, useEffect, useState } from "react"
+import { useDropzone } from "react-dropzone"
 
 interface ImageProcessorProps {
   type: "bg_removal" | "upscale"
@@ -200,7 +200,7 @@ export function ImageProcessor({ type, title, description }: ImageProcessorProps
       {preview && !result && (
         <Card className="overflow-hidden">
           <div className="relative aspect-video bg-muted">
-            <img src={preview || "/placeholder.svg"} alt="Preview" className="h-full w-full object-contain" />
+            <img src={preview || "/placeholder.svg"} alt="Image preview before processing" className="h-full w-full object-contain" />
             <Button variant="secondary" size="icon" className="absolute right-4 top-4" onClick={reset}>
               <X className="h-4 w-4" />
             </Button>
@@ -264,14 +264,14 @@ export function ImageProcessor({ type, title, description }: ImageProcessorProps
             <div className="space-y-2">
               <p className="text-sm font-medium text-muted-foreground">Original</p>
               <div className="aspect-square overflow-hidden rounded-lg border border-border bg-muted">
-                <img src={preview! || "/placeholder.svg"} alt="Original" className="h-full w-full object-contain" />
+                <img src={preview! || "/placeholder.svg"} alt="Original image before AI processing" className="h-full w-full object-contain" />
               </div>
             </div>
             {/* After */}
             <div className="space-y-2">
               <p className="text-sm font-medium text-primary">Processed</p>
               <div className="aspect-square overflow-hidden rounded-lg border-2 border-primary/20 bg-[repeating-conic-gradient(oklch(0.96_0.005_265)_0%_25%,transparent_0%_50%)] bg-[length:16px_16px]">
-                <img src={result || "/placeholder.svg"} alt="Processed" className="h-full w-full object-contain" />
+                <img src={result || "/placeholder.svg"} alt="AI processed result image" className="h-full w-full object-contain" />
               </div>
             </div>
           </div>

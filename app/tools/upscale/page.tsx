@@ -113,6 +113,31 @@ const howToStructuredData = {
   },
 };
 
+const breadcrumbStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "Home",
+      item: "https://www.erazor.app",
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "Tools",
+      item: "https://www.erazor.app/tools",
+    },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: "Image Upscaler",
+      item: "https://www.erazor.app/tools/upscale",
+    },
+  ],
+};
+
 export default async function UpscalePage() {
   const supabase = await createClient();
   const {
@@ -129,6 +154,12 @@ export default async function UpscalePage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(howToStructuredData),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbStructuredData),
         }}
       />
       <Header isLoggedIn={!!user} />

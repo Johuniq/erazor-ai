@@ -12,6 +12,13 @@ import { ProductHuntBanner } from "@/components/landing/product-hunt-banner"
 import { TestimonialsSection } from "@/components/landing/testimonials-section"
 import { UseCases } from "@/components/landing/use-cases-section"
 import { createClient } from "@/lib/supabase/server"
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "https://www.erazor.app",
+  },
+}
 
 export default async function HomePage() {
   const supabase = await createClient()

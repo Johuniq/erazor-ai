@@ -112,6 +112,31 @@ const howToStructuredData = {
   },
 };
 
+const breadcrumbStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "Home",
+      item: "https://www.erazor.app",
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "Tools",
+      item: "https://www.erazor.app/tools",
+    },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: "Background Remover",
+      item: "https://www.erazor.app/tools/remove-background",
+    },
+  ],
+};
+
 export default async function RemoveBackgroundPage() {
   const supabase = await createClient();
   const {
@@ -128,6 +153,12 @@ export default async function RemoveBackgroundPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(howToStructuredData),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbStructuredData),
         }}
       />
       <Header isLoggedIn={!!user} />

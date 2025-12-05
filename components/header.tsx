@@ -1,10 +1,11 @@
 "use client"
 
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Eraser, Menu, X, ChevronDown } from "lucide-react"
-import { useState } from "react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { ChevronDown, Menu, X } from "lucide-react"
+import Image from "next/image"
+import Link from "next/link"
+import { useState } from "react"
 
 interface HeaderProps {
   isLoggedIn?: boolean
@@ -17,9 +18,7 @@ export function Header({ isLoggedIn = false }: HeaderProps) {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <Eraser className="h-4 w-4 text-primary-foreground" />
-          </div>
+          <Image src="/logo.png" alt="Erazor AI" width={30} height={30} className="rounded-lg" />
           <span className="text-lg font-bold tracking-tight">Erazor AI</span>
         </Link>
 

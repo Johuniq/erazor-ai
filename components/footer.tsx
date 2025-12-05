@@ -1,5 +1,5 @@
 import { IconBrandFacebook, IconBrandGithub, IconBrandProducthunt, IconBrandX } from "@tabler/icons-react"
-import { Eraser } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 
 export function Footer() {
@@ -9,9 +9,7 @@ export function Footer() {
         <div className="grid gap-8 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
-                <Eraser className="h-5 w-5 text-primary-foreground" />
-              </div>
+              <Image src="/logo.png" alt="Erazor AI" width={30} height={30} className="rounded-lg" />
               <span className="text-xl font-bold">Erazor AI</span>
             </Link>
             <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
@@ -50,8 +48,8 @@ export function Footer() {
                 href="https://www.facebook.com/johuniq"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors hover:bg-[#da552f] hover:text-white"
-                aria-label="Product Hunt"
+                className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-colors hover:bg-[#1877F2] hover:text-white"
+                aria-label="Facebook"
               >
                 <IconBrandFacebook/>
               </a>

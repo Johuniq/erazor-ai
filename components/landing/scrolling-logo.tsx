@@ -1,6 +1,7 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import Image from "next/image"
 import type React from "react"
 
 interface Logo {
@@ -53,7 +54,14 @@ const ScrollingLogos: React.FC<ScrollingLogosProps> = ({ logos, speed = "normal"
                   {logo.svg ? (
                     <div className={cn("fill-current", logo.height)} dangerouslySetInnerHTML={{ __html: logo.svg }} />
                   ) : logo.image ? (
-                    <img src={logo.image || "/placeholder.svg"} alt={logo.name} className={logo.height} />
+                    <Image 
+                      src={logo.image} 
+                      alt={`${logo.name} logo - Trusted by leading companies`} 
+                      width={120}
+                      height={40}
+                      className={logo.height}
+                      loading="lazy"
+                    />
                   ) : null}
                 </div>
               ))}
