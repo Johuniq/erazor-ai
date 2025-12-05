@@ -252,9 +252,15 @@ export default async function BillingPage({
 
                         const isPopular = index === 0
                         const isCurrentPlan = profile?.plan?.toLowerCase() === product.name.toLowerCase()
-                        
-                        // Use hardcoded benefits based on product name
-                        const benefits = planBenefits[product.name.toLowerCase()] || []
+
+                        // Use hardcoded benefits based on product name (match "pro" or "enterprise" in name)
+                        const productNameLower = product.name.toLowerCase()
+                        const planKey = productNameLower.includes("enterprise")
+                          ? "enterprise"
+                          : productNameLower.includes("pro")
+                            ? "pro"
+                            : ""
+                        const benefits = planBenefits[planKey] || []
 
                         return (
                           <div

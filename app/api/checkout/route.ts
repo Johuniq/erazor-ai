@@ -40,6 +40,7 @@ export async function GET(request: NextRequest) {
         user_id: user.id,
       },
       successUrl: `${origin}/dashboard/billing?success=true`,
+      products: []
     }
 
     if (priceId) {
