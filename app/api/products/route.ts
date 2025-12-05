@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 
 const polar = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN!,
-  server: "production",
+  server: "sandbox",
 })
 
 export async function GET() {

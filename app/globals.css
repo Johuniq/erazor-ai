@@ -3,7 +3,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Updated theme for production-ready design inspired by modern SaaS */
 :root {
   --background: oklch(0.99 0 0);
   --foreground: oklch(0.09 0 0);

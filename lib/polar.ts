@@ -2,7 +2,7 @@ import { Polar } from "@polar-sh/sdk"
 
 export const polar = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN!,
-  server: "sandbox", // Change to "production" when going live
+  server: "sandbox",
 })
 
 export async function createCheckoutSession(
@@ -29,6 +29,6 @@ export async function getSubscription(subscriptionId: string) {
 }
 
 export async function cancelSubscription(subscriptionId: string) {
-  const subscription = await polar.subscriptions.cancel({ id: subscriptionId })
+  const subscription = await polar.subscriptions.revoke({ id: subscriptionId })
   return subscription
 }

@@ -12,7 +12,7 @@ import { redirect } from "next/navigation"
 
 const polar = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN!,
-  server: "production",
+  server: "sandbox",
 })
 
 // Hardcoded benefits for each plan (monthly and yearly)
