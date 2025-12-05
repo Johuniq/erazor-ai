@@ -7,13 +7,48 @@ const supabaseAdmin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, proces
 
 const PLAN_CREDITS: Record<string, number> = {
   pro: 200,
+  starter: 200,
   enterprise: 2000,
 }
 
+// Helper to extract user_id from various places in event data
+function getUserId(data: any): string | null {
+  // Check metadata first
+  if (data.metadata?.user_id) {
+    return data.metadata.user_id as string
+  }
+  // Check customer metadata
+  if (data.customer?.metadata?.user_id) {
+    return data.customer.metadata.user_id as string
+  }
+  // Check external customer id (we set this as user.id)
+  if (data.customer?.externalId) {
+    return data.customer.externalId as string
+  }
+  return null
+}
+
+// Helper to determine plan and credits from product name
+function getPlanFromProduct(productName: string): { plan: string; credits: number } {
+  const name = productName.toLowerCase()
+  
+  if (name.includes("enterprise") || name.includes("business")) {
+    return { plan: "enterprise", credits: PLAN_CREDITS.enterprise }
+  }
+  if (name.includes("pro") || name.includes("starter")) {
+    return { plan: "pro", credits: PLAN_CREDITS.pro }
+  }
+  return { plan: "free", credits: 10 }
+}
+
 export async function POST(req: NextRequest) {
+  console.log("=== Polar Webhook Received ===")
+  
   try {
     const body = await req.text()
     const headers = Object.fromEntries(req.headers.entries())
+
+    console.log("Webhook headers:", JSON.stringify(headers, null, 2))
 
     const event = validateEvent(
       body,
@@ -21,41 +56,69 @@ export async function POST(req: NextRequest) {
       process.env.POLAR_WEBHOOK_SECRET ?? ""
     )
 
-    console.log("Polar webhook received:", event.type)
+    console.log("Event type:", event.type)
+    console.log("Event data:", JSON.stringify(event.data, null, 2))
 
     switch (event.type) {
       case "checkout.created":
         console.log("Checkout created:", event.data.id)
         break
 
-      case "checkout.updated":
-        console.log("Checkout updated:", event.data.id, event.data.status)
+      case "checkout.updated": {
+        const checkout = event.data
+        console.log("Checkout updated:", checkout.id, "Status:", checkout.status)
+        
+        // Handle successful checkout
+        if (checkout.status === "succeeded") {
+          const userId = getUserId(checkout)
+          console.log("Checkout succeeded for user:", userId)
+          
+          if (userId && checkout.product) {
+            const { plan, credits } = getPlanFromProduct(checkout.product.name || "")
+            console.log(`Updating user ${userId} to ${plan} with ${credits} credits`)
+            
+            const { error } = await supabaseAdmin
+              .from("profiles")
+              .update({
+                plan,
+                credits,
+                polar_customer_id: checkout.customerId,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", userId)
+
+            if (error) {
+              console.error("Failed to update profile on checkout:", error)
+            } else {
+              console.log(`Successfully updated user ${userId} via checkout`)
+              
+              // Log credit transaction
+              await supabaseAdmin.from("credit_transactions").insert({
+                user_id: userId,
+                amount: credits,
+                type: "purchase",
+                description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} plan purchase`,
+                reference_id: checkout.id,
+              })
+            }
+          }
+        }
         break
+      }
 
       case "order.created": {
         const order = event.data
         console.log("Order created:", order.id)
 
-        const userId = order.metadata?.user_id as string
+        const userId = getUserId(order)
         if (!userId) {
-          console.error("No user_id in order metadata")
+          console.error("No user_id found in order:", JSON.stringify(order, null, 2))
           break
         }
 
-        // Determine plan from product
-        const productName = order.product?.name?.toLowerCase() || ""
-        let plan = "free"
-        let credits = 10
+        const { plan, credits } = getPlanFromProduct(order.product?.name || "")
+        console.log(`Order: Updating user ${userId} to ${plan} with ${credits} credits`)
 
-        if (productName.includes("pro")) {
-          plan = "pro"
-          credits = PLAN_CREDITS.pro
-        } else if (productName.includes("enterprise")) {
-          plan = "enterprise"
-          credits = PLAN_CREDITS.enterprise
-        }
-
-        // Update user profile with credits
         const { error } = await supabaseAdmin
           .from("profiles")
           .update({
@@ -88,26 +151,15 @@ export async function POST(req: NextRequest) {
         const subscription = event.data
         console.log("Subscription created:", subscription.id)
 
-        const userId = subscription.metadata?.user_id as string
+        const userId = getUserId(subscription)
         if (!userId) {
-          console.error("No user_id in subscription metadata")
+          console.error("No user_id found in subscription:", JSON.stringify(subscription, null, 2))
           break
         }
 
-        // Determine plan from product
-        const productName = subscription.product?.name?.toLowerCase() || ""
-        let plan = "free"
-        let credits = 10
+        const { plan, credits } = getPlanFromProduct(subscription.product?.name || "")
+        console.log(`Subscription: Updating user ${userId} to ${plan} with ${credits} credits`)
 
-        if (productName.includes("pro")) {
-          plan = "pro"
-          credits = PLAN_CREDITS.pro
-        } else if (productName.includes("enterprise")) {
-          plan = "enterprise"
-          credits = PLAN_CREDITS.enterprise
-        }
-
-        // Update user profile
         const { error } = await supabaseAdmin
           .from("profiles")
           .update({
@@ -141,23 +193,11 @@ export async function POST(req: NextRequest) {
         const subscription = event.data
         console.log("Subscription updated:", subscription.id)
 
-        const userId = subscription.metadata?.user_id as string
+        const userId = getUserId(subscription)
         if (!userId) break
 
-        // Determine plan from product
-        const productName = subscription.product?.name?.toLowerCase() || ""
-        let plan = "free"
-        let credits = 10
+        const { plan, credits } = getPlanFromProduct(subscription.product?.name || "")
 
-        if (productName.includes("pro")) {
-          plan = "pro"
-          credits = PLAN_CREDITS.pro
-        } else if (productName.includes("enterprise")) {
-          plan = "enterprise"
-          credits = PLAN_CREDITS.enterprise
-        }
-
-        // Update user profile
         await supabaseAdmin
           .from("profiles")
           .update({
@@ -176,10 +216,9 @@ export async function POST(req: NextRequest) {
         const subscription = event.data
         console.log("Subscription canceled:", subscription.id)
 
-        const userId = subscription.metadata?.user_id as string
+        const userId = getUserId(subscription)
         if (!userId) break
 
-        // Downgrade to free plan
         await supabaseAdmin
           .from("profiles")
           .update({
@@ -204,6 +243,6 @@ export async function POST(req: NextRequest) {
       return new NextResponse("", { status: 403 })
     }
     console.error("Webhook error:", error)
-    throw error
+    return new NextResponse("Internal server error", { status: 500 })
   }
 }

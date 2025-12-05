@@ -56,7 +56,9 @@ export async function GET(request: NextRequest) {
     // Create checkout session with Polar SDK
     const checkout = await polar.checkouts.create({
       products: [productIdToUse],
-      externalCustomerId: user.id,
+      metadata: {
+        user_id: user.id,
+      },
       successUrl: `${origin}/dashboard/billing?success=true`,
     })
 
