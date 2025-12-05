@@ -3,11 +3,24 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { createClient } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
 import { Polar } from "@polar-sh/sdk"
-import { AlertCircle, ArrowRight, Check, CheckCircle, Clock, CreditCard, Sparkles, Zap } from "lucide-react"
+import {
+  AlertCircle,
+  ArrowRight,
+  Calendar,
+  Check,
+  CheckCircle,
+  Clock,
+  CreditCard,
+  Receipt,
+  Sparkles,
+  TrendingUp,
+  Zap,
+} from "lucide-react"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 
@@ -15,6 +28,13 @@ const polar = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN!,
   server: "production",
 })
+
+// Plan credits allocation (matches webhook PLAN_CREDITS)
+const planCredits: Record<string, { monthly: number; yearly: number }> = {
+  free: { monthly: 10, yearly: 10 },
+  pro: { monthly: 200, yearly: 2600 },
+  enterprise: { monthly: 2000, yearly: 26000 },
+}
 
 // Hardcoded benefits for each plan (monthly and yearly)
 const planBenefits: Record<string, { monthly: string[]; yearly: string[] }> = {
@@ -36,7 +56,7 @@ const planBenefits: Record<string, { monthly: string[]; yearly: string[] }> = {
   },
   pro: {
     monthly: [
-      "100 credits/month",
+      "200 credits/month",
       "Background removal",
       "Image upscaling (4x)",
       "HD quality export",
@@ -45,7 +65,7 @@ const planBenefits: Record<string, { monthly: string[]; yearly: string[] }> = {
       "History & downloads",
     ],
     yearly: [
-      "1300 credits/year (~109/month)",
+      "2600 credits/year (~217/month)",
       "Background removal",
       "Image upscaling (4x)",
       "HD quality export",
@@ -56,7 +76,7 @@ const planBenefits: Record<string, { monthly: string[]; yearly: string[] }> = {
   },
   enterprise: {
     monthly: [
-      "200 credits/month",
+      "2000 credits/month",
       "Everything in Pro",
       "Batch processing",
       "API access",
@@ -65,7 +85,7 @@ const planBenefits: Record<string, { monthly: string[]; yearly: string[] }> = {
       "SLA guarantee",
     ],
     yearly: [
-      "2500 credits/year (~209/month)",
+      "26000 credits/year (~2167/month)",
       "Everything in Pro",
       "Batch processing",
       "API access",
@@ -94,6 +114,88 @@ async function getProducts() {
     return result.result.items
   } catch (error) {
     console.error("Error fetching products:", error)
+    return []
+  }
+}
+
+async function getSubscription(customerId: string | null, externalId: string | null) {
+  try {
+    // Try with customerId first
+    if (customerId) {
+      console.log("[Billing] Fetching subscription with customerId:", customerId)
+      const result = await polar.subscriptions.list({
+        customerId,
+        limit: 1,
+      })
+      console.log("[Billing] Subscription result:", result.result.items.length, "items")
+      if (result.result.items.length > 0) {
+        console.log("[Billing] Subscription found:", JSON.stringify(result.result.items[0], null, 2))
+        return result.result.items[0]
+      }
+    }
+    
+    // Fallback to external customer ID (Supabase user ID)
+    if (externalId) {
+      console.log("[Billing] Trying externalId:", externalId)
+      // First get customer by externalId
+      try {
+        const customer = await polar.customers.getExternal({ externalId })
+        console.log("[Billing] Customer found by externalId:", customer?.id)
+        if (customer?.id) {
+          const result = await polar.subscriptions.list({
+            customerId: customer.id,
+            limit: 1,
+          })
+          console.log("[Billing] Subscription by externalId:", result.result.items.length, "items")
+          if (result.result.items.length > 0) {
+            console.log("[Billing] Subscription data:", JSON.stringify(result.result.items[0], null, 2))
+          }
+          return result.result.items[0] || null
+        }
+      } catch (e) {
+        console.log("[Billing] Customer not found by externalId:", e)
+      }
+    }
+    
+    return null
+  } catch (error) {
+    console.error("Error fetching subscription:", error)
+    return null
+  }
+}
+
+async function getOrders(customerId: string | null, externalId: string | null) {
+  try {
+    // Try with customerId first
+    if (customerId) {
+      const result = await polar.orders.list({
+        customerId,
+        limit: 10,
+      })
+      if (result.result.items.length > 0) {
+        return result.result.items
+      }
+    }
+    
+    // Fallback to external customer ID
+    if (externalId) {
+      try {
+        const customer = await polar.customers.getExternal({ externalId })
+        if (customer?.id) {
+          const result = await polar.orders.list({
+            customerId: customer.id,
+            limit: 10,
+          })
+          return result.result.items
+        }
+      } catch {
+        // Customer not found
+      }
+    }
+    
+    return []
+  } catch (error) {
+    console.error("Error fetching orders:", error)
     return []
   }
 }
@@ -128,11 +230,39 @@ export default async function BillingPage({
     .order("created_at", { ascending: false })
     .limit(10)
 
+  // Get usage stats for this month
+  const startOfMonth = new Date()
+  startOfMonth.setDate(1)
+  startOfMonth.setHours(0, 0, 0, 0)
+
+  const { data: usageThisMonth } = await supabase
+    .from("credit_transactions")
+    .select("amount")
+    .eq("user_id", user.id)
+    .eq("type", "usage")
+    .gte("created_at", startOfMonth.toISOString())
+
+  const creditsUsedThisMonth = usageThisMonth?.reduce((sum, tx) => sum + Math.abs(tx.amount), 0) || 0
+
   const products = await getProducts()
   const hasProducts = products.length > 0
 
+  // Fetch subscription details from Polar (try polar_customer_id first, then user.id as externalId)
+  const subscription = await getSubscription(profile?.polar_customer_id || null, user.id)
+  const orders = await getOrders(profile?.polar_customer_id || null, user.id)
+
+  // Calculate credit usage - use actual credits remaining, don't calculate negative values
+  const currentPlan = profile?.plan || "free"
+  const isYearly = subscription?.recurringInterval === "year"
+  const maxCredits = planCredits[currentPlan]?.[isYearly ? "yearly" : "monthly"] || 10
+  const creditsRemaining = profile?.credits || 0
+  // If remaining > max, user has bonus credits, show total as remaining
+  const effectiveMax = Math.max(maxCredits, creditsRemaining)
+  const creditsUsed = Math.max(0, effectiveMax - creditsRemaining)
+  const usagePercentage = effectiveMax > 0 ? Math.min((creditsUsed / effectiveMax) * 100, 100) : 0
+
   return (
-    <div className="mx-auto max-w-5xl space-y-8">
+    <div className="w-full px-10 space-y-6">
       {/* Page header */}
       <div className="space-y-2">
         <div className="flex items-center gap-3">
@@ -166,46 +296,148 @@ export default async function BillingPage({
         </Alert>
       )}
 
-      {/* Current Plan Card */}
-      <Card className="shadow-sm border-border/60 overflow-hidden">
-        <div className="bg-gradient-to-r from-primary/5 via-transparent to-accent/5">
-          <CardHeader className="pb-4">
-            <CardTitle className="text-lg">Current Plan</CardTitle>
-            <CardDescription>Your subscription details</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between rounded-xl border border-border bg-background px-5 py-3">
-              <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
-                  <Zap className="h-7 w-7 text-primary" />
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {/* Current Plan Card */}
+        <Card className="shadow-sm border-border/60">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Zap className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-xl font-bold capitalize">{profile?.plan || "Free"}</span>
-                    <Badge variant="secondary" className="text-xs">
-                      Active
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    <span className="font-semibold text-foreground">{profile?.credits || 0}</span> credits remaining
-                  </p>
+                  <p className="text-sm text-muted-foreground">Current Plan</p>
+                  <p className="text-xl font-bold capitalize">{currentPlan}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                {profile?.plan && profile.plan !== "free" && (
-                  <ManageSubscriptionButton />
-                )}
-                <Button variant="outline" asChild>
+              <Badge variant={currentPlan === "free" ? "secondary" : "default"}>
+                {currentPlan === "free" ? "Free" : "Active"}
+              </Badge>
+            </div>
+            {subscription?.currentPeriodEnd && (
+              <div className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="h-4 w-4" />
+                <span>
+                  Renews{" "}
+                  {new Date(subscription.currentPeriodEnd).toLocaleDateString(undefined, {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Credits Remaining Card */}
+        <Card className="shadow-sm border-border/60">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
+                  <Sparkles className="h-5 w-5 text-accent" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Credits Remaining</p>
+                  <p className="text-xl font-bold">{creditsRemaining}</p>
+                </div>
+              </div>
+              <span className="text-sm text-muted-foreground">/ {effectiveMax}</span>
+            </div>
+            <Progress value={((creditsRemaining / effectiveMax) * 100)} className="h-2" />
+            <p className="mt-2 text-xs text-muted-foreground">
+              {creditsUsedThisMonth > 0 ? `${creditsUsedThisMonth} credits used this month` : "No credits used this period"}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Usage This Month Card */}
+        <Card className="shadow-sm border-border/60">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
+                <TrendingUp className="h-5 w-5 text-blue-500" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Used This Month</p>
+                <p className="text-xl font-bold">{creditsUsedThisMonth}</p>
+              </div>
+            </div>
+            <p className="mt-4 text-xs text-muted-foreground">
+              {new Date().toLocaleDateString(undefined, { month: "long", year: "numeric" })}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Subscription Management Card */}
+      {currentPlan !== "free" && (
+        <Card className="shadow-sm border-border/60">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Subscription Details</CardTitle>
+            <CardDescription>Manage your subscription and billing</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap items-center gap-3">
+              <ManageSubscriptionButton />
+              <Button variant="outline" asChild>
+                <Link href="#plans" className="gap-1.5">
+                  Change Plan
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+            {subscription && (
+              <div className="mt-4 grid gap-4 md:grid-cols-3 text-sm">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Started:</span>
+                  <span className="font-medium">
+                    {new Date(subscription.startedAt || subscription.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Billing:</span>
+                  <span className="font-medium capitalize">{subscription.recurringInterval}ly</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Status:</span>
+                  <Badge variant="outline" className="capitalize">{subscription.status}</Badge>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Current Plan Card - For Free Users */}
+      {currentPlan === "free" && (
+        <Card className="shadow-sm border-border/60 overflow-hidden py-0 gap-0">
+          <div className="bg-gradient-to-r from-primary/5 via-transparent to-accent/5 py-4">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Upgrade to Pro</CardTitle>
+              <CardDescription>Get more credits and premium features</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-2 pb-0">
+              <div className="flex items-center justify-between rounded-xl border border-border bg-background px-4 py-3">
+                <p className="text-sm text-muted-foreground">
+                  You&apos;re on the free plan with <span className="font-semibold text-foreground">{creditsRemaining}</span> credits remaining.
+                </p>
+                <Button asChild>
                   <Link href="#plans" className="gap-1.5">
-                    Manage Plan
+                    View Plans
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
               </div>
-            </div>
-          </CardContent>
-        </div>
-      </Card>
+            </CardContent>
+          </div>
+        </Card>
+      )}
 
       {/* Upgrade Plans */}
       <Card className="shadow-sm border-border/60" id="plans">
@@ -380,6 +612,62 @@ export default async function BillingPage({
           )}
         </CardContent>
       </Card>
+
+      {/* Invoices & Receipts */}
+      {orders.length > 0 && (
+        <Card className="shadow-sm border-border/60">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Invoices & Receipts</CardTitle>
+                <CardDescription>Download your payment receipts</CardDescription>
+              </div>
+              <Badge variant="outline" className="text-muted-foreground">
+                {orders.length} orders
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {orders.map((order) => (
+                <div
+                  key={order.id}
+                  className="flex items-center justify-between rounded-xl border border-border p-4 transition-colors hover:bg-muted/50"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                      <Receipt className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{order.product?.name || "Subscription"}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(order.createdAt).toLocaleDateString(undefined, {
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="font-semibold">
+                        {new Intl.NumberFormat("en-US", {
+                          style: "currency",
+                          currency: order.currency || "usd",
+                        }).format((order.totalAmount || 0) / 100)}
+                      </p>
+                      <Badge variant="outline" className="text-xs capitalize">
+                        {order.billingReason?.replace("_", " ") || "Purchase"}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Transaction History */}
       <Card className="shadow-sm border-border/60">

@@ -1,12 +1,12 @@
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { History, ImageMinus, Maximize2, ExternalLink, Clock, Zap } from "lucide-react"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { createClient } from "@/lib/supabase/server"
+import { cn } from "@/lib/utils"
+import { Clock, ExternalLink, History, ImageMinus, Maximize2, Zap } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { cn } from "@/lib/utils"
+import { redirect } from "next/navigation"
 
 export default async function HistoryPage() {
   const supabase = await createClient()
@@ -37,7 +37,7 @@ export default async function HistoryPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
+    <div className="w-full px-10 space-y-8">
       {/* Page header */}
       <div className="space-y-2">
         <div className="flex items-center gap-3">
