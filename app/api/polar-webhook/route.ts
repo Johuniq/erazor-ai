@@ -48,8 +48,6 @@ function getPlanFromProduct(productName: string): { plan: string; credits: numbe
 export const dynamic = "force-dynamic"
 
 export async function POST(req: NextRequest) {
-  console.log("=== Polar Webhook Received ===")
-
   try {
     const body = await req.text()
     const headers: Record<string, string> = {}
@@ -57,34 +55,22 @@ export async function POST(req: NextRequest) {
     req.headers.forEach((value, key) => {
       headers[key] = value
     })
-
-    console.log("Request URL:", req.url)
-    console.log("Headers received:", Object.keys(headers).join(", "))
-
     const event = validateEvent(
       body,
       headers,
       process.env.POLAR_WEBHOOK_SECRET ?? ""
     )
-
-    console.log("Event type:", event.type)
-
     switch (event.type) {
       case "checkout.created":
-        console.log("Checkout created:", event.data.id)
         break
 
       case "checkout.updated": {
         const checkout = event.data
-        console.log("Checkout updated:", checkout.id, "Status:", checkout.status)
-
         if (checkout.status === "succeeded") {
           const userId = getUserId(checkout)
-          console.log("Checkout succeeded for user:", userId)
 
           if (userId && checkout.product) {
             const { plan, credits } = getPlanFromProduct(checkout.product.name || "")
-            console.log(`Updating user ${userId} to ${plan} with ${credits} credits`)
 
             const { error } = await supabaseAdmin
               .from("profiles")
@@ -97,9 +83,8 @@ export async function POST(req: NextRequest) {
               .eq("id", userId)
 
             if (error) {
-              console.error("Failed to update profile on checkout:", error)
+                console.error("Failed to update profile:", error)
             } else {
-              console.log(`Successfully updated user ${userId} via checkout`)
 
               await supabaseAdmin.from("credit_transactions").insert({
                 user_id: userId,
@@ -116,7 +101,6 @@ export async function POST(req: NextRequest) {
 
       case "order.created": {
         const order = event.data
-        console.log("Order created:", order.id)
 
         const userId = getUserId(order)
         if (!userId) {
@@ -125,7 +109,6 @@ export async function POST(req: NextRequest) {
         }
 
         const { plan, credits } = getPlanFromProduct(order.product?.name || "")
-        console.log(`Order: Updating user ${userId} to ${plan} with ${credits} credits`)
 
         const { error } = await supabaseAdmin
           .from("profiles")
@@ -150,13 +133,11 @@ export async function POST(req: NextRequest) {
           reference_id: order.id,
         })
 
-        console.log(`Updated user ${userId} to ${plan} plan with ${credits} credits`)
         break
       }
 
       case "subscription.created": {
         const subscription = event.data
-        console.log("Subscription created:", subscription.id)
 
         const userId = getUserId(subscription)
         if (!userId) {
@@ -165,7 +146,6 @@ export async function POST(req: NextRequest) {
         }
 
         const { plan, credits } = getPlanFromProduct(subscription.product?.name || "")
-        console.log(`Subscription: Updating user ${userId} to ${plan} with ${credits} credits`)
 
         const { error } = await supabaseAdmin
           .from("profiles")
@@ -191,13 +171,11 @@ export async function POST(req: NextRequest) {
           reference_id: subscription.id,
         })
 
-        console.log(`User ${userId} subscribed to ${plan} plan with ${credits} credits`)
         break
       }
 
       case "subscription.updated": {
         const subscription = event.data
-        console.log("Subscription updated:", subscription.id)
 
         const userId = getUserId(subscription)
         if (!userId) break
@@ -214,13 +192,11 @@ export async function POST(req: NextRequest) {
           })
           .eq("id", userId)
 
-        console.log(`User ${userId} updated to ${plan} plan`)
         break
       }
 
       case "subscription.canceled": {
         const subscription = event.data
-        console.log("Subscription canceled:", subscription.id)
 
         const userId = getUserId(subscription)
         if (!userId) break
@@ -234,12 +210,43 @@ export async function POST(req: NextRequest) {
           })
           .eq("id", userId)
 
-        console.log(`User ${userId} downgraded to free plan`)
         break
       }
 
-      default:
-        console.log("Unhandled event type:", event.type)
+      default: {
+        // Handle meter credit balance changes and other events not in SDK types
+        const eventType = event.type as string
+        const eventData = event.data as any
+
+        if (eventType === "customer_meter.credit_balance_changed") {
+          console.log("Customer meter credit balance changed:", eventData)
+
+          // Get customer external ID (user_id)
+          const userId = eventData.customer?.externalId || eventData.customer?.metadata?.user_id
+          if (!userId) {
+            console.error("No user_id found in meter event")
+            break
+          }
+
+          // Update user credits based on meter balance
+          const balance = eventData.balance ?? (eventData.credited_units - eventData.consumed_units)
+
+          if (typeof balance === "number") {
+            await supabaseAdmin
+              .from("profiles")
+              .update({
+                credits: Math.max(0, balance),
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", userId)
+
+            console.log(`Updated user ${userId} credits to ${balance}`)
+          }
+        } else {
+          console.log("Unhandled event type:", eventType)
+        }
+        break
+      }
     }
 
     return new NextResponse("OK", { status: 200 })

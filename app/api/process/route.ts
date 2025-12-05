@@ -1,8 +1,15 @@
-import { type NextRequest, NextResponse } from "next/server"
 import { createClient } from "@/lib/supabase/server"
+import { Polar } from "@polar-sh/sdk"
+import { type NextRequest, NextResponse } from "next/server"
 
 const BG_REMOVER_API = "https://api-bgremover.icons8.com/api/v1"
 const UPSCALER_API = "https://api-upscaler.icons8.com/api/v1"
+
+// Initialize Polar client for event ingestion
+const polar = new Polar({
+  accessToken: process.env.POLAR_ACCESS_TOKEN!,
+  server: process.env.NODE_ENV === "production" ? "production" : "sandbox",
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -101,6 +108,27 @@ export async function POST(request: NextRequest) {
       description: jobType === "bg_removal" ? "Background removal" : "Image upscaling",
       reference_id: job.id,
     })
+
+    // Ingest event to Polar to deduct credits from meter
+    try {
+      await polar.events.ingest({
+        events: [
+          {
+            name: "credit_usage",
+            externalCustomerId: user.id,
+            metadata: {
+              job_type: jobType,
+              job_id: job.id,
+              units: 1,
+            },
+          },
+        ],
+      })
+      console.log(`Polar event ingested for user ${user.id}: 1 credit used for ${jobType}`)
+    } catch (polarError) {
+      // Log but don't fail the request if Polar event ingestion fails
+      console.error("Failed to ingest Polar event:", polarError)
+    }
 
     return NextResponse.json({
       job_id: result.id,
