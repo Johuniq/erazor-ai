@@ -1,47 +1,77 @@
 "use client"
 
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useUserStore } from "@/lib/store/user-store"
 import { createClient } from "@/lib/supabase/client"
 import { AlertTriangle, Loader2, Mail, Save, Settings, User } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
+interface UserProfile {
+  id: string
+  email: string | null
+  full_name: string | null
+  avatar_url: string | null
+  credits: number
+  plan: string
+  polar_customer_id: string | null
+  polar_subscription_id: string | null
+  created_at: string
+  updated_at: string
+}
+
 export default function SettingsPage() {
-  const { profile, isLoading: profileLoading, fetchProfile, setProfile } = useUserStore()
+  const [profile, setProfile] = useState<UserProfile | null>(null)
+  const [loading, setLoading] = useState(true)
   const [fullName, setFullName] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
-  const hasFetchedProfile = useRef(false)
 
   useEffect(() => {
-    if (!hasFetchedProfile.current) {
-      hasFetchedProfile.current = true
-      fetchProfile()
-    }
-  }, [])
+    async function loadProfile() {
+      try {
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) {
+          router.push("/login")
+          return
+        }
 
-  useEffect(() => {
-    if (profile) {
-      setFullName(profile.full_name || "")
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single()
+
+        if (profileData) {
+          setProfile(profileData)
+          setFullName(profileData.full_name || "")
+        }
+      } catch (error) {
+        console.error("Error loading profile:", error)
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [profile])
+
+    loadProfile()
+  }, [router])
 
   const handleSave = async () => {
     if (!profile) return
@@ -57,8 +87,8 @@ export default function SettingsPage() {
     if (error) {
       toast.error("Failed to update profile")
     } else {
-      // Update the store with new data
-      setProfile({ ...profile, full_name: fullName, updated_at: new Date().toISOString() })
+      // Update local state with new data
+      setProfile({ ...profile!, full_name: fullName, updated_at: new Date().toISOString() })
       toast.success("Profile updated successfully")
     }
     setIsSaving(false)
@@ -81,7 +111,7 @@ export default function SettingsPage() {
     }
   }
 
-  if (profileLoading) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="flex flex-col items-center gap-3">

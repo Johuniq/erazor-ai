@@ -4,30 +4,42 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { useUserStore } from "@/lib/store/user-store"
 import { createClient } from "@/lib/supabase/client"
 import type { ProcessingJob } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import {
-    ArrowRight,
-    CheckCircle2,
-    Clock,
-    Crown,
-    ImageIcon,
-    ImageMinus,
-    LayoutDashboard,
-    Maximize2,
-    Sparkles,
-    TrendingUp,
-    Zap,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  Crown,
+  ImageIcon,
+  ImageMinus,
+  LayoutDashboard,
+  Maximize2,
+  Sparkles,
+  TrendingUp,
+  Zap,
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
+
+interface UserProfile {
+  id: string
+  email: string | null
+  full_name: string | null
+  avatar_url: string | null
+  credits: number
+  plan: string
+  polar_customer_id: string | null
+  polar_subscription_id: string | null
+  created_at: string
+  updated_at: string
+}
 
 export default function OverviewPage() {
   const router = useRouter()
-  const { profile, fetchProfile, isLoading: profileLoading } = useUserStore()
+  const [profile, setProfile] = useState<UserProfile | null>(null)
   const [recentJobs, setRecentJobs] = useState<ProcessingJob[]>([])
   const [stats, setStats] = useState({
     totalJobs: 0,
@@ -35,22 +47,12 @@ export default function OverviewPage() {
     upscaleJobs: 0,
     completedJobs: 0,
   })
-  const [dataLoading, setDataLoading] = useState(true)
-  const hasFetchedProfile = useRef(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!hasFetchedProfile.current) {
-      hasFetchedProfile.current = true
-      fetchProfile()
-    }
-  }, [])
-
-  useEffect(() => {
-    if (profileLoading || !profile) return
-    
     let mounted = true
 
-    async function loadJobsData() {
+    async function loadData() {
       try {
         const supabase = createClient()
         
@@ -59,6 +61,18 @@ export default function OverviewPage() {
         if (!user) {
           router.push("/login")
           return
+        }
+
+        // Fetch profile
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single()
+
+        if (!mounted) return
+        if (profileData) {
+          setProfile(profileData)
         }
 
         // Fetch recent jobs
@@ -91,19 +105,17 @@ export default function OverviewPage() {
         console.error("Error loading dashboard data:", error)
       } finally {
         if (mounted) {
-          setDataLoading(false)
+          setLoading(false)
         }
       }
     }
 
-    loadJobsData()
+    loadData()
 
     return () => {
       mounted = false
     }
-  }, [profile, profileLoading, router])
-
-  const loading = profileLoading || dataLoading
+  }, [router])
 
   if (loading) {
     return (
