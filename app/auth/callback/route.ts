@@ -5,7 +5,7 @@ import { NextResponse } from "next/server"
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get("code")
-  const next = requestUrl.searchParams.get("next") || "/dashboard/overview"
+  const next = requestUrl.searchParams.get("next") || "/dashboard"
 
   if (code) {
     const supabase = await createClient()
@@ -28,17 +28,24 @@ export async function GET(request: NextRequest) {
 
       // If no profile exists, create one
       if (!profile) {
+        // Extract user metadata with fallbacks for different OAuth providers
+        const metadata = sessionData.user.user_metadata || {}
+        const fullName = metadata.full_name || 
+                        metadata.name || 
+                        metadata.user_name || 
+                        metadata.preferred_username || 
+                        null
+        const avatarUrl = metadata.avatar_url || 
+                         metadata.picture || 
+                         null
+
         const { error: profileError } = await supabase
           .from("profiles")
           .insert({
             id: sessionData.user.id,
             email: sessionData.user.email,
-            full_name: sessionData.user.user_metadata?.full_name || 
-                       sessionData.user.user_metadata?.name || 
-                       null,
-            avatar_url: sessionData.user.user_metadata?.avatar_url || 
-                       sessionData.user.user_metadata?.picture || 
-                       null,
+            full_name: fullName,
+            avatar_url: avatarUrl,
             credits: 10,
             plan: "free",
           })
