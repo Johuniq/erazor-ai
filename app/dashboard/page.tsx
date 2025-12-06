@@ -27,7 +27,7 @@ import { useEffect, useState } from "react"
 
 export default function OverviewPage() {
   const router = useRouter()
-  const { profile, fetchProfile } = useUserStore()
+  const { profile, fetchProfile, isLoading: profileLoading } = useUserStore()
   const [recentJobs, setRecentJobs] = useState<ProcessingJob[]>([])
   const [stats, setStats] = useState({
     totalJobs: 0,
@@ -35,30 +35,29 @@ export default function OverviewPage() {
     upscaleJobs: 0,
     completedJobs: 0,
   })
-  const [loading, setLoading] = useState(true)
-  const [hasInitialized, setHasInitialized] = useState(false)
+  const [dataLoading, setDataLoading] = useState(true)
 
   useEffect(() => {
-    if (hasInitialized) return
+    fetchProfile()
+  }, [fetchProfile])
+
+  useEffect(() => {
+    if (profileLoading || !profile) return
     
     let mounted = true
 
-    async function loadData() {
+    async function loadJobsData() {
       try {
-        setHasInitialized(true)
+        console.log('[Dashboard] Starting to load jobs data...')
         const supabase = createClient()
         
         const { data: { user } } = await supabase.auth.getUser()
+        console.log('[Dashboard] User:', user?.id)
         
         if (!user) {
           router.push("/login")
           return
         }
-
-        // Fetch profile into store
-        await fetchProfile()
-
-        if (!mounted) return
 
         // Fetch recent jobs
         const { data: jobs } = await supabase
@@ -86,21 +85,26 @@ export default function OverviewPage() {
           upscaleJobs: upscale.count || 0,
           completedJobs: completed.count || 0,
         })
+        console.log('[Dashboard] All data loaded, setting loading to false')
       } catch (error) {
         console.error("Error loading dashboard data:", error)
       } finally {
         if (mounted) {
-          setLoading(false)
+          setDataLoading(false)
+          console.log('[Dashboard] Data loading set to false')
         }
       }
     }
 
-    loadData()
+    loadJobsData()
 
     return () => {
       mounted = false
     }
-  }, [hasInitialized, router, fetchProfile])
+  }, [profile, profileLoading, router])
+
+  const loading = profileLoading || dataLoading
+  console.log('[Dashboard] Render - profileLoading:', profileLoading, 'dataLoading:', dataLoading, 'profile:', profile?.id)
 
   if (loading) {
     return (
