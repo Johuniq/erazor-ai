@@ -1,7 +1,7 @@
 "use client"
 
-import { createClient } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -11,12 +11,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { LogOut, Settings, User, Zap, CreditCard, ChevronDown } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 import type { Profile } from "@/lib/types"
-import { toast } from "sonner"
+import { ChevronDown, CoinsIcon, CreditCard, LogOut, Settings, User, Zap } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 interface DashboardHeaderProps {
   profile: Profile
@@ -53,9 +53,7 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
             variant="outline"
             className="gap-2 px-3 py-1.5 hover:bg-accent/50 transition-colors cursor-pointer border-border/60"
           >
-            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-accent/20">
-              <Zap className="h-3 w-3 text-accent" />
-            </div>
+            <CoinsIcon className="h-4 w-4 text-yellow-500" />
             <span className="font-semibold">{profile.credits}</span>
             <span className="text-muted-foreground">credits</span>
           </Badge>

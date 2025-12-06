@@ -102,30 +102,30 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="w-full px-10 space-y-8">
+    <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 space-y-6 sm:space-y-8">
       {/* Page header */}
       <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
-            <Settings className="h-6 w-6 text-primary" />
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
+            <Settings className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
-            <p className="text-muted-foreground">Manage your account settings</p>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Settings</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Manage your account settings</p>
           </div>
         </div>
       </div>
 
       {/* Profile Card - Enhanced */}
       <Card className="shadow-sm border-border/60">
-        <CardHeader className="pb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-              <User className="h-5 w-5 text-primary" />
+        <CardHeader className="pb-3 sm:pb-4 p-4 sm:p-6">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/10">
+              <User className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
             <div>
-              <CardTitle className="text-lg">Profile Information</CardTitle>
-              <CardDescription>Update your account details</CardDescription>
+              <CardTitle className="text-base sm:text-lg">Profile Information</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">Update your account details</CardDescription>
             </div>
           </div>
         </CardHeader>

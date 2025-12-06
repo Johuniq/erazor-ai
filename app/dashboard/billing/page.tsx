@@ -262,16 +262,16 @@ export default async function BillingPage({
   const usagePercentage = effectiveMax > 0 ? Math.min((creditsUsed / effectiveMax) * 100, 100) : 0
 
   return (
-    <div className="w-full px-10 space-y-6">
+    <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 space-y-4 sm:space-y-6">
       {/* Page header */}
       <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
-            <CreditCard className="h-6 w-6 text-primary" />
+        <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
+            <CreditCard className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Billing & Credits</h1>
-            <p className="text-muted-foreground">Manage your subscription and credits</p>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Billing & Credits</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Manage your subscription and credits</p>
           </div>
         </div>
       </div>
@@ -297,18 +297,18 @@ export default async function BillingPage({
       )}
 
       {/* Stats Grid */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
         {/* Current Plan Card */}
         <Card className="shadow-sm border-border/60">
-          <CardContent className="pt-6">
+          <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                  <Zap className="h-5 w-5 text-primary" />
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-primary/10">
+                  <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Current Plan</p>
-                  <p className="text-xl font-bold capitalize">{currentPlan}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Current Plan</p>
+                  <p className="text-lg sm:text-xl font-bold capitalize">{currentPlan}</p>
                 </div>
               </div>
               <Badge variant={currentPlan === "free" ? "secondary" : "default"}>
@@ -333,15 +333,15 @@ export default async function BillingPage({
 
         {/* Credits Remaining Card */}
         <Card className="shadow-sm border-border/60">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10">
-                  <Sparkles className="h-5 w-5 text-accent" />
+          <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-2 sm:mb-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-accent/10">
+                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-accent" />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Credits Remaining</p>
-                  <p className="text-xl font-bold">{creditsRemaining}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Credits Remaining</p>
+                  <p className="text-lg sm:text-xl font-bold">{creditsRemaining}</p>
                 </div>
               </div>
               <span className="text-sm text-muted-foreground">/ {effectiveMax}</span>
@@ -355,14 +355,14 @@ export default async function BillingPage({
 
         {/* Usage This Month Card */}
         <Card className="shadow-sm border-border/60">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
-                <TrendingUp className="h-5 w-5 text-blue-500" />
+          <CardContent className="pt-4 sm:pt-6 p-4 sm:p-6">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-blue-500/10">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Used This Month</p>
-                <p className="text-xl font-bold">{creditsUsedThisMonth}</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Used This Month</p>
+                <p className="text-lg sm:text-xl font-bold">{creditsUsedThisMonth}</p>
               </div>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
@@ -375,12 +375,12 @@ export default async function BillingPage({
       {/* Subscription Management Card */}
       {currentPlan !== "free" && (
         <Card className="shadow-sm border-border/60">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Subscription Details</CardTitle>
-            <CardDescription>Manage your subscription and billing</CardDescription>
+          <CardHeader className="pb-3 p-4 sm:p-6">
+            <CardTitle className="text-base sm:text-lg">Subscription Details</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">Manage your subscription and billing</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap items-center gap-3">
+          <CardContent className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2 sm:gap-3">
               <ManageSubscriptionButton />
               <Button variant="outline" asChild>
                 <Link href="#plans" className="gap-1.5">

@@ -5,13 +5,13 @@ import { ProcessingResult } from "@/components/dashboard/processing-result"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { createClient } from "@/lib/supabase/client"
 import { getFileSizeLimit } from "@/lib/utils"
-import { Crown, ImageIcon, Lightbulb, Maximize2, Sparkles } from "lucide-react"
+import { ImageIcon, ImageMinus, Lightbulb, Sparkles, Zap } from "lucide-react"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 type ProcessingState = "idle" | "uploading" | "processing" | "complete" | "error"
 
-export default function UpscalePage() {
+export default function BackgroundRemovalPage() {
   const [state, setState] = useState<ProcessingState>("idle")
   const [originalUrl, setOriginalUrl] = useState<string>("")
   const [resultUrl, setResultUrl] = useState<string>("")
@@ -43,7 +43,7 @@ export default function UpscalePage() {
     try {
       const formData = new FormData()
       formData.append("image", file)
-      formData.append("type", "upscale")
+      formData.append("type", "bg_removal")
 
       const response = await fetch("/api/process", {
         method: "POST",
@@ -61,7 +61,7 @@ export default function UpscalePage() {
       setOriginalUrl(URL.createObjectURL(file))
 
       const pollResult = async (jobId: string): Promise<string> => {
-        const statusResponse = await fetch(`/api/process/${jobId}?type=upscale`)
+        const statusResponse = await fetch(`/api/process/${jobId}?type=bg_removal`)
         const statusData = await statusResponse.json()
 
         if (statusData.status === "completed" && statusData.result_url) {
@@ -77,7 +77,7 @@ export default function UpscalePage() {
       const result = await pollResult(data.job_id)
       setResultUrl(result)
       setState("complete")
-      toast.success("Image upscaled successfully!")
+      toast.success("Background removed successfully!")
     } catch (error) {
       setState("error")
       toast.error(error instanceof Error ? error.message : "Processing failed")
@@ -96,11 +96,11 @@ export default function UpscalePage() {
       <div className="space-y-2">
         <div className="flex items-center gap-2 sm:gap-3">
           <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
-            <Maximize2 className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <ImageMinus className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Image Upscaling</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">Enhance your images to higher resolution with AI</p>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Background Removal</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Remove backgrounds from your images with AI precision</p>
           </div>
         </div>
       </div>
@@ -109,7 +109,7 @@ export default function UpscalePage() {
       <Card className="shadow-sm border-border/60">
         <CardHeader className="pb-3 sm:pb-4 p-4 sm:p-6">
           <CardTitle className="text-base sm:text-lg">Upload Your Image</CardTitle>
-          <CardDescription className="text-xs sm:text-sm">Our AI will upscale your image up to 2x resolution</CardDescription>
+          <CardDescription className="text-xs sm:text-sm">Our AI will automatically detect and remove the background</CardDescription>
         </CardHeader>
         <CardContent className="p-4 sm:p-6">
           {state === "complete" ? (
@@ -127,9 +127,9 @@ export default function UpscalePage() {
                   </div>
                   <div>
                     <p className="text-sm sm:text-base font-medium">
-                      {state === "uploading" ? "Uploading your image..." : "AI is enhancing your image..."}
+                      {state === "uploading" ? "Uploading your image..." : "AI is processing your image..."}
                     </p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">This usually takes 10-20 seconds</p>
+                    <p className="text-xs sm:text-sm text-muted-foreground">This usually takes 5-10 seconds</p>
                   </div>
                 </div>
               )}
@@ -138,23 +138,23 @@ export default function UpscalePage() {
         </CardContent>
       </Card>
 
-      {/* Tips section */}
+      {/* Tips section - Enhanced */}
       <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-3">
         {[
           {
             icon: Lightbulb,
-            title: "Best Quality",
-            description: "Start with the highest quality image you have",
+            title: "Good Lighting",
+            description: "Use images with clear subjects and good lighting",
           },
           {
             icon: ImageIcon,
-            title: "Works Best",
-            description: "Photos and artwork produce the best results",
+            title: "High Resolution",
+            description: "Higher resolution images produce better results",
           },
           {
-            icon: Crown,
-            title: "Pro Feature",
-            description: "Pro users can upscale up to 4x resolution",
+            icon: Zap,
+            title: "Best For",
+            description: "Works best with photos of people, products, and objects",
           },
         ].map((tip) => (
           <Card key={tip.title} className="border-dashed border-border/60">

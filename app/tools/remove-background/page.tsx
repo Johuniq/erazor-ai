@@ -163,16 +163,16 @@ export default async function RemoveBackgroundPage() {
       />
       <Header isLoggedIn={!!user} />
       <main className="flex-1">
-        <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
+        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 lg:py-16 lg:px-8">
           {/* Header */}
-          <div className="mb-10 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-              <ImageMinus className="h-7 w-7 text-primary" />
+          <div className="mb-8 sm:mb-10 text-center">
+            <div className="mx-auto mb-3 sm:mb-4 flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-full bg-primary/10">
+              <ImageMinus className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight lg:text-4xl">
               Remove Background from Image
             </h1>
-            <p className="mx-auto mt-3 max-w-xl text-lg text-muted-foreground">
+            <p className="mx-auto mt-2 sm:mt-3 max-w-xl text-base sm:text-lg text-muted-foreground">
               Instantly remove backgrounds from any image with AI-powered
               precision. Free to try, no signup required.
             </p>
@@ -186,7 +186,7 @@ export default async function RemoveBackgroundPage() {
           />
 
           {/* Features */}
-          <div className="mt-16 grid gap-6 sm:grid-cols-3">
+          <div className="mt-8 sm:mt-12 lg:mt-16 grid gap-4 sm:gap-6 sm:grid-cols-3">
             {[
               {
                 title: "AI-Powered",
@@ -202,11 +202,11 @@ export default async function RemoveBackgroundPage() {
                 description: "PNG export with full transparency",
               },
             ].map((feature) => (
-              <div key={feature.title} className="flex items-start gap-3">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+              <div key={feature.title} className="flex items-start gap-2 sm:gap-3">
+                <CheckCircle2 className="mt-0.5 h-4 w-4 sm:h-5 sm:w-5 shrink-0 text-primary" />
                 <div>
-                  <p className="font-medium">{feature.title}</p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm sm:text-base font-medium">{feature.title}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground">
                     {feature.description}
                   </p>
                 </div>
@@ -214,37 +214,37 @@ export default async function RemoveBackgroundPage() {
             ))}
           </div>
 
-          <div className="mt-16">
-            <h2 className="text-2xl font-semibold text-center mb-8">
+          <div className="mt-12 sm:mt-16">
+            <h2 className="text-xl sm:text-2xl font-semibold text-center mb-6 sm:mb-8">
               Frequently Asked Questions
             </h2>
-            <div className="space-y-6">
-              <div className="rounded-lg border border-border p-6">
-                <h3 className="font-semibold">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="rounded-lg border border-border p-4 sm:p-6">
+                <h3 className="text-sm sm:text-base font-semibold">
                   Is the background remover free to use?
                 </h3>
-                <p className="mt-2 text-muted-foreground">
+                <p className="mt-2 text-xs sm:text-sm lg:text-base text-muted-foreground">
                   Yes! You can remove backgrounds from 3 images for free without
                   signing up. Sign up for a free account to get 10 credits, or
                   upgrade to Pro for 200 credits per month.
                 </p>
               </div>
-              <div className="rounded-lg border border-border p-6">
-                <h3 className="font-semibold">
+              <div className="rounded-lg border border-border p-4 sm:p-6">
+                <h3 className="text-sm sm:text-base font-semibold">
                   How does AI background removal work?
                 </h3>
-                <p className="mt-2 text-muted-foreground">
+                <p className="mt-2 text-xs sm:text-sm lg:text-base text-muted-foreground">
                   Our AI analyzes your image to identify the subject and
                   background. It then precisely removes the background while
                   preserving fine details like hair, fur, and transparent
                   objects, delivering a clean transparent PNG.
                 </p>
               </div>
-              <div className="rounded-lg border border-border p-6">
-                <h3 className="font-semibold">
+              <div className="rounded-lg border border-border p-4 sm:p-6">
+                <h3 className="text-sm sm:text-base font-semibold">
                   What image formats are supported?
                 </h3>
-                <p className="mt-2 text-muted-foreground">
+                <p className="mt-2 text-xs sm:text-sm lg:text-base text-muted-foreground">
                   We support JPG, PNG, and WebP formats. The output is always a
                   high-quality PNG with transparency.
                 </p>
@@ -253,13 +253,13 @@ export default async function RemoveBackgroundPage() {
           </div>
 
           {/* CTA */}
-          <div className="mt-16 rounded-xl border border-border bg-muted/30 p-8 text-center">
-            <h2 className="text-xl font-semibold">Need more credits?</h2>
-            <p className="mt-2 text-muted-foreground">
+          <div className="mt-12 sm:mt-16 rounded-xl border border-border bg-muted/30 p-6 sm:p-8 text-center">
+            <h2 className="text-lg sm:text-xl font-semibold">Need more credits?</h2>
+            <p className="mt-2 text-sm sm:text-base text-muted-foreground">
               Sign up for free to get 10 credits, or upgrade to Pro for 200
               credits/month.
             </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-4">
+            <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4">
               <Link
                 href="/signup"
                 className="inline-flex items-center justify-center rounded-md bg-primary px-6 py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"

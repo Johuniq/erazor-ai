@@ -162,14 +162,14 @@ export function ImageProcessor({ type, title, description }: ImageProcessorProps
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Credits Badge */}
-      <div className="flex items-center justify-between">
-        <Badge variant={credits === 0 ? "destructive" : "secondary"} className="text-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+        <Badge variant={credits === 0 ? "destructive" : "secondary"} className="text-xs sm:text-sm">
           {credits !== null ? `${credits} credits remaining` : "Loading..."}
         </Badge>
         {credits !== null && credits < 3 && (
-          <Link href="/signup" className="text-sm text-primary hover:underline">
+          <Link href="/signup" className="text-xs sm:text-sm text-primary hover:underline">
             Sign up for more credits
           </Link>
         )}
@@ -179,18 +179,18 @@ export function ImageProcessor({ type, title, description }: ImageProcessorProps
       {!preview && (
         <Card
           {...getRootProps()}
-          className={`relative cursor-pointer border-2 border-dashed p-12 text-center transition-all ${
+          className={`relative cursor-pointer border-2 border-dashed p-6 sm:p-10 lg:p-12 text-center transition-all ${
             isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/50"
           }`}
         >
           <input {...getInputProps()} />
-          <div className="flex flex-col items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-              <Upload className="h-8 w-8 text-primary" />
+          <div className="flex flex-col items-center gap-3 sm:gap-4">
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 lg:h-16 lg:w-16 items-center justify-center rounded-full bg-primary/10">
+              <Upload className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-primary" />
             </div>
             <div>
-              <p className="text-lg font-medium">{isDragActive ? "Drop your image here" : "Drag & drop your image"}</p>
-              <p className="mt-1 text-sm text-muted-foreground">or click to browse (JPG, PNG, WebP up to 10MB)</p>
+              <p className="text-base sm:text-lg font-medium">{isDragActive ? "Drop your image here" : "Drag & drop your image"}</p>
+              <p className="mt-1 text-xs sm:text-sm text-muted-foreground">or click to browse (JPG, PNG, WebP up to 10MB)</p>
             </div>
           </div>
         </Card>
@@ -201,46 +201,46 @@ export function ImageProcessor({ type, title, description }: ImageProcessorProps
         <Card className="overflow-hidden">
           <div className="relative aspect-video bg-muted">
             <img src={preview || "/placeholder.svg"} alt="Image preview before processing" className="h-full w-full object-contain" />
-            <Button variant="secondary" size="icon" className="absolute right-4 top-4" onClick={reset}>
+            <Button variant="secondary" size="icon" className="absolute right-2 top-2 sm:right-4 sm:top-4 h-8 w-8 sm:h-10 sm:w-10" onClick={reset}>
               <X className="h-4 w-4" />
             </Button>
           </div>
-          <div className="border-t border-border p-4">
+          <div className="border-t border-border p-3 sm:p-4">
             {processing ? (
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  <span className="text-sm font-medium">Processing your image...</span>
+                  <span className="text-xs sm:text-sm font-medium">Processing your image...</span>
                 </div>
                 <Progress value={progress} className="h-2" />
               </div>
             ) : error ? (
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
                 <div className="flex items-center gap-2 text-destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <span className="text-sm">{error}</span>
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span className="text-xs sm:text-sm">{error}</span>
                 </div>
                 {requiresSignup ? (
-                  <Button asChild>
+                  <Button asChild size="sm" className="w-full sm:w-auto">
                     <Link href="/signup">
                       Sign up for more
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
                 ) : (
-                  <Button onClick={processImage}>Try Again</Button>
+                  <Button onClick={processImage} size="sm" className="w-full sm:w-auto">Try Again</Button>
                 )}
               </div>
             ) : (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium">{file?.name}</p>
-                    <p className="text-xs text-muted-foreground">{file && (file.size / 1024 / 1024).toFixed(2)} MB</p>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                  <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-medium truncate">{file?.name}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{file && (file.size / 1024 / 1024).toFixed(2)} MB</p>
                   </div>
                 </div>
-                <Button onClick={processImage} disabled={credits === 0} className="gap-2">
+                <Button onClick={processImage} disabled={credits === 0} className="gap-2 w-full sm:w-auto" size="sm">
                   <Sparkles className="h-4 w-4" />
                   {type === "bg_removal" ? "Remove Background" : "Upscale Image"}
                 </Button>
@@ -253,33 +253,33 @@ export function ImageProcessor({ type, title, description }: ImageProcessorProps
       {/* Result */}
       {result && (
         <Card className="overflow-hidden">
-          <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-4">
+          <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-3 sm:p-4">
             <div className="flex items-center gap-2 text-primary">
-              <CheckCircle2 className="h-5 w-5" />
-              <span className="font-medium">Processing complete!</span>
+              <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="text-sm sm:text-base font-medium">Processing complete!</span>
             </div>
           </div>
-          <div className="grid gap-4 p-4 md:grid-cols-2">
+          <div className="grid gap-3 sm:gap-4 p-3 sm:p-4 md:grid-cols-2">
             {/* Before */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Original</p>
+            <div className="space-y-1.5 sm:space-y-2">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">Original</p>
               <div className="aspect-square overflow-hidden rounded-lg border border-border bg-muted">
                 <img src={preview! || "/placeholder.svg"} alt="Original image before AI processing" className="h-full w-full object-contain" />
               </div>
             </div>
             {/* After */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-primary">Processed</p>
+            <div className="space-y-1.5 sm:space-y-2">
+              <p className="text-xs sm:text-sm font-medium text-primary">Processed</p>
               <div className="aspect-square overflow-hidden rounded-lg border-2 border-primary/20 bg-[repeating-conic-gradient(oklch(0.96_0.005_265)_0%_25%,transparent_0%_50%)] bg-[length:16px_16px]">
                 <img src={result || "/placeholder.svg"} alt="AI processed result image" className="h-full w-full object-contain" />
               </div>
             </div>
           </div>
-          <div className="flex items-center justify-between border-t border-border p-4">
-            <Button variant="outline" onClick={reset}>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 border-t border-border p-3 sm:p-4">
+            <Button variant="outline" onClick={reset} size="sm" className="w-full sm:w-auto">
               Process Another
             </Button>
-            <Button onClick={downloadResult} className="gap-2">
+            <Button onClick={downloadResult} className="gap-2 w-full sm:w-auto" size="sm">
               <Download className="h-4 w-4" />
               Download Result
             </Button>

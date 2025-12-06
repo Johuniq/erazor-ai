@@ -8,6 +8,7 @@ import type { Profile } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import {
   ChevronRight,
+  Coins,
   CreditCard,
   HelpCircle,
   History,
@@ -15,8 +16,7 @@ import {
   LayoutDashboard,
   Maximize2,
   Menu,
-  Settings,
-  Sparkles,
+  Settings
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -28,8 +28,8 @@ interface DashboardSidebarProps {
 }
 
 const navigation = [
-  { name: "Overview", href: "/dashboard/overview", icon: LayoutDashboard, description: "Dashboard summary" },
-  { name: "Background Removal", href: "/dashboard", icon: ImageMinus, description: "Remove backgrounds" },
+  { name: "Overview", href: "/dashboard", icon: LayoutDashboard, description: "Dashboard summary" },
+  { name: "Background Removal", href: "/dashboard/remove-background", icon: ImageMinus, description: "Remove backgrounds" },
   { name: "Image Upscaling", href: "/dashboard/upscale", icon: Maximize2, description: "Enhance resolution" },
   { name: "History", href: "/dashboard/history", icon: History, description: "View past jobs" },
   { name: "Billing", href: "/dashboard/billing", icon: CreditCard, description: "Manage subscription" },
@@ -58,8 +58,8 @@ function SidebarContent({ profile, onNavigate }: { profile: Profile; onNavigate?
         <div className="rounded-xl bg-gradient-to-br from-sidebar-accent to-sidebar-accent/50 p-4 shadow-sm">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15">
-                <Sparkles className="h-4 w-4 text-primary" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-yellow-500/15">
+                <Coins className="h-4 w-4 text-yellow-500" />
               </div>
               <span className="text-sm font-medium text-sidebar-foreground">Credits</span>
             </div>
