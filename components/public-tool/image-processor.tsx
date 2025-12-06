@@ -41,9 +41,19 @@ export function ImageProcessor({ type, title, description }: ImageProcessorProps
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ fingerprint }),
     })
-      .then((res) => res.json())
-      .then((data) => setCredits(data.credits))
-      .catch(() => setCredits(3))
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch credits')
+        return res.json()
+      })
+      .then((data) => {
+        // Ensure we have a valid number
+        const creditValue = typeof data.credits === 'number' ? data.credits : 3
+        setCredits(creditValue)
+      })
+      .catch((error) => {
+        console.error('Credits fetch error:', error)
+        setCredits(3) // Fallback to default
+      })
   }, [fingerprint])
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -97,7 +107,11 @@ export function ImageProcessor({ type, title, description }: ImageProcessorProps
       }
 
       setProgress(30)
-      setCredits(data.credits_remaining)
+      // Ensure credits_remaining is a valid number
+      const remainingCredits = typeof data.credits_remaining === 'number' 
+        ? data.credits_remaining 
+        : (credits !== null ? Math.max(0, credits - 1) : 0)
+      setCredits(remainingCredits)
 
       // Poll for result
       const jobId = data.job_id
