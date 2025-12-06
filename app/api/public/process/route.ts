@@ -1,5 +1,5 @@
 import { verifyOrigin } from "@/lib/csrf-protection"
-import { getRateLimiter, RATE_LIMITS } from "@/lib/rate-limiter"
+import { rateLimiters, checkRateLimit, getRateLimitHeaders } from "@/lib/redis-rate-limiter"
 import { createClient } from "@supabase/supabase-js"
 import { type NextRequest, NextResponse } from "next/server"
 
@@ -49,28 +49,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Fingerprint required" }, { status: 400 })
     }
 
-    // Rate limiting - 5 requests per hour per fingerprint
-    const rateLimiter = getRateLimiter()
-    const rateLimit = rateLimiter.check(
-      fingerprint,
-      RATE_LIMITS.PROCESS_ANON.maxRequests,
-      RATE_LIMITS.PROCESS_ANON.windowMs
-    )
+    // Rate limiting - 5 requests per hour per fingerprint (Redis-based)
+    const rateLimit = await checkRateLimit(rateLimiters.processAnon, fingerprint)
 
     if (!rateLimit.success) {
       return NextResponse.json(
         { 
           message: "Too many requests. Please sign up for unlimited processing!",
-          resetAt: new Date(rateLimit.resetAt).toISOString(),
+          resetAt: new Date(rateLimit.reset * 1000).toISOString(),
           requiresSignup: true
         },
         { 
           status: 429,
-          headers: {
-            'X-RateLimit-Limit': String(RATE_LIMITS.PROCESS_ANON.maxRequests),
-            'X-RateLimit-Remaining': String(rateLimit.remaining),
-            'X-RateLimit-Reset': String(rateLimit.resetAt),
-          }
+          headers: getRateLimitHeaders(rateLimit),
         }
       )
     }

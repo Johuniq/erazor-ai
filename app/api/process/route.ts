@@ -1,5 +1,5 @@
 import { verifyOrigin } from "@/lib/csrf-protection"
-import { getRateLimiter, RATE_LIMITS } from "@/lib/rate-limiter"
+import { rateLimiters, checkRateLimit, getRateLimitHeaders } from "@/lib/redis-rate-limiter"
 import { createClient } from "@/lib/supabase/server"
 import { Polar } from "@polar-sh/sdk"
 import { type NextRequest, NextResponse } from "next/server"
@@ -31,27 +31,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    // Rate limiting - 20 requests per hour per user
-    const rateLimiter = getRateLimiter()
-    const rateLimit = rateLimiter.check(
-      user.id,
-      RATE_LIMITS.PROCESS_AUTH.maxRequests,
-      RATE_LIMITS.PROCESS_AUTH.windowMs
-    )
+    // Rate limiting - 20 requests per hour per user (Redis-based)
+    const rateLimit = await checkRateLimit(rateLimiters.processAuth, user.id)
 
     if (!rateLimit.success) {
       return NextResponse.json(
         { 
           message: "Too many requests. Please try again later.",
-          resetAt: new Date(rateLimit.resetAt).toISOString()
+          resetAt: new Date(rateLimit.reset * 1000).toISOString()
         },
         { 
           status: 429,
-          headers: {
-            'X-RateLimit-Limit': String(RATE_LIMITS.PROCESS_AUTH.maxRequests),
-            'X-RateLimit-Remaining': String(rateLimit.remaining),
-            'X-RateLimit-Reset': String(rateLimit.resetAt),
-          }
+          headers: getRateLimitHeaders(rateLimit),
         }
       )
     }

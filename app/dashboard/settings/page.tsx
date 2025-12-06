@@ -23,7 +23,7 @@ import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 export default function SettingsPage() {
-  const { currentProfile, isLoading: profileLoading, fetchProfile, setProfile } = useUserStore()
+  const { profile, isLoading: profileLoading, fetchProfile, setProfile } = useUserStore()
   const [fullName, setFullName] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -34,13 +34,13 @@ export default function SettingsPage() {
   }, [fetchProfile])
 
   useEffect(() => {
-    if (currentProfile) {
-      setFullName(currentProfile.full_name || "")
+    if (profile) {
+      setFullName(profile.full_name || "")
     }
-  }, [currentProfile])
+  }, [profile])
 
   const handleSave = async () => {
-    if (!currentProfile) return
+    if (!profile) return
 
     setIsSaving(true)
     const supabase = createClient()
@@ -48,20 +48,20 @@ export default function SettingsPage() {
     const { error } = await supabase
       .from("profiles")
       .update({ full_name: fullName, updated_at: new Date().toISOString() })
-      .eq("id", currentProfile.id)
+      .eq("id", profile.id)
 
     if (error) {
       toast.error("Failed to update profile")
     } else {
       // Update the store with new data
-      setProfile({ ...currentProfile, full_name: fullName, updated_at: new Date().toISOString() })
+      setProfile({ ...profile, full_name: fullName, updated_at: new Date().toISOString() })
       toast.success("Profile updated successfully")
     }
     setIsSaving(false)
   }
 
   const handleDeleteAccount = async () => {
-    if (!currentProfile) return
+    if (!profile) return
 
     setIsDeleting(true)
     const supabase = createClient()
@@ -122,7 +122,7 @@ export default function SettingsPage() {
               <Mail className="h-4 w-4 text-muted-foreground" />
               Email
             </Label>
-            <Input id="email" type="email" value={currentProfile?.email || ""} disabled className="bg-muted/50 h-11" />
+            <Input id="email" type="email" value={profile?.email || ""} disabled className="bg-muted/50 h-11" />
             <p className="text-xs text-muted-foreground">Email cannot be changed</p>
           </div>
           <div className="space-y-2">

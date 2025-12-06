@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { rateLimiters, checkRateLimit } from "@/lib/redis-rate-limiter"
 import { Polar } from "@polar-sh/sdk"
 import { type NextRequest, NextResponse } from "next/server"
 
@@ -16,6 +17,13 @@ export async function GET(request: NextRequest) {
 
     if (!user) {
       return NextResponse.redirect(new URL("/login", request.url))
+    }
+
+    // Rate limiting - 10 checkout requests per hour
+    const rateLimit = await checkRateLimit(rateLimiters.checkout, user.id)
+    if (!rateLimit.success) {
+      const origin = request.headers.get("origin") || request.nextUrl.origin
+      return NextResponse.redirect(`${origin}/dashboard/billing?error=rate_limit`)
     }
 
     const { searchParams } = new URL(request.url)

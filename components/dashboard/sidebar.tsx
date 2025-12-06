@@ -138,7 +138,7 @@ function SidebarContent({ profile, onNavigate }: { profile: Profile; onNavigate?
       {/* Help - Enhanced */}
       <div className="border-t border-sidebar-border p-3">
         <Link
-          href="mailto:support@erazor.ai"
+          href="mailto:support@erazor.app"
           className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group"
           onClick={onNavigate}
         >
