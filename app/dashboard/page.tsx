@@ -23,7 +23,7 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 
 export default function OverviewPage() {
   const router = useRouter()
@@ -36,10 +36,14 @@ export default function OverviewPage() {
     completedJobs: 0,
   })
   const [dataLoading, setDataLoading] = useState(true)
+  const hasFetchedProfile = useRef(false)
 
   useEffect(() => {
-    fetchProfile()
-  }, [fetchProfile])
+    if (!hasFetchedProfile.current) {
+      hasFetchedProfile.current = true
+      fetchProfile()
+    }
+  }, [])
 
   useEffect(() => {
     if (profileLoading || !profile) return
@@ -48,11 +52,9 @@ export default function OverviewPage() {
 
     async function loadJobsData() {
       try {
-        console.log('[Dashboard] Starting to load jobs data...')
         const supabase = createClient()
         
         const { data: { user } } = await supabase.auth.getUser()
-        console.log('[Dashboard] User:', user?.id)
         
         if (!user) {
           router.push("/login")
@@ -85,13 +87,11 @@ export default function OverviewPage() {
           upscaleJobs: upscale.count || 0,
           completedJobs: completed.count || 0,
         })
-        console.log('[Dashboard] All data loaded, setting loading to false')
       } catch (error) {
         console.error("Error loading dashboard data:", error)
       } finally {
         if (mounted) {
           setDataLoading(false)
-          console.log('[Dashboard] Data loading set to false')
         }
       }
     }
@@ -104,7 +104,6 @@ export default function OverviewPage() {
   }, [profile, profileLoading, router])
 
   const loading = profileLoading || dataLoading
-  console.log('[Dashboard] Render - profileLoading:', profileLoading, 'dataLoading:', dataLoading, 'profile:', profile?.id)
 
   if (loading) {
     return (

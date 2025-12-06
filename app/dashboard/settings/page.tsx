@@ -19,7 +19,7 @@ import { useUserStore } from "@/lib/store/user-store"
 import { createClient } from "@/lib/supabase/client"
 import { AlertTriangle, Loader2, Mail, Save, Settings, User } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
 export default function SettingsPage() {
@@ -28,10 +28,14 @@ export default function SettingsPage() {
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
+  const hasFetchedProfile = useRef(false)
 
   useEffect(() => {
-    fetchProfile()
-  }, [fetchProfile])
+    if (!hasFetchedProfile.current) {
+      hasFetchedProfile.current = true
+      fetchProfile()
+    }
+  }, [])
 
   useEffect(() => {
     if (profile) {
