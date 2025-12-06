@@ -46,31 +46,48 @@ function getPlanFromProduct(productName: string): { plan: string; credits: numbe
 
 // Disable body parsing - we need raw body for signature verification
 export const dynamic = "force-dynamic"
+export const runtime = "nodejs"
 
 export async function POST(req: NextRequest) {
   try {
+    // Log the request for debugging
+    console.log("[Webhook] Received request:", {
+      method: req.method,
+      url: req.url,
+      headers: Object.fromEntries(req.headers.entries()),
+    })
+
     const body = await req.text()
     const headers: Record<string, string> = {}
     
     req.headers.forEach((value, key) => {
       headers[key] = value
     })
+
+    console.log("[Webhook] Validating event with secret:", process.env.POLAR_WEBHOOK_SECRET ? "Set" : "Not set")
+    
     const event = validateEvent(
       body,
       headers,
       process.env.POLAR_WEBHOOK_SECRET ?? ""
     )
+
+    console.log("[Webhook] Event validated:", event.type)
     switch (event.type) {
       case "checkout.created":
+        console.log("[Webhook] Checkout created:", event.data.id)
         break
 
       case "checkout.updated": {
+        console.log("[Webhook] Checkout updated:", event.data.id, "Status:", event.data.status)
         const checkout = event.data
         if (checkout.status === "succeeded") {
           const userId = getUserId(checkout)
+          console.log("[Webhook] Processing successful checkout for user:", userId)
 
           if (userId && checkout.product) {
             const { plan, credits } = getPlanFromProduct(checkout.product.name || "")
+            console.log("[Webhook] Applying plan:", plan, "Credits:", credits)
 
             const { error } = await supabaseAdmin
               .from("profiles")
@@ -83,8 +100,9 @@ export async function POST(req: NextRequest) {
               .eq("id", userId)
 
             if (error) {
-                console.error("Failed to update profile:", error)
+                console.error("[Webhook] Failed to update profile:", error)
             } else {
+              console.log("[Webhook] Profile updated successfully")
 
               await supabaseAdmin.from("credit_transactions").insert({
                 user_id: userId,
@@ -93,6 +111,7 @@ export async function POST(req: NextRequest) {
                 description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} plan purchase`,
                 reference_id: checkout.id,
               })
+              console.log("[Webhook] Credit transaction recorded")
             }
           }
         }
@@ -100,15 +119,18 @@ export async function POST(req: NextRequest) {
       }
 
       case "order.created": {
+        console.log("[Webhook] Order created:", event.data.id)
         const order = event.data
 
         const userId = getUserId(order)
         if (!userId) {
-          console.error("No user_id found in order")
+          console.error("[Webhook] No user_id found in order")
           break
         }
+        console.log("[Webhook] Processing order for user:", userId)
 
         const { plan, credits } = getPlanFromProduct(order.product?.name || "")
+        console.log("[Webhook] Applying plan:", plan, "Credits:", credits)
 
         const { error } = await supabaseAdmin
           .from("profiles")
@@ -121,9 +143,10 @@ export async function POST(req: NextRequest) {
           .eq("id", userId)
 
         if (error) {
-          console.error("Failed to update profile:", error)
+          console.error("[Webhook] Failed to update profile:", error)
           break
         }
+        console.log("[Webhook] Profile updated successfully")
 
         await supabaseAdmin.from("credit_transactions").insert({
           user_id: userId,
@@ -132,20 +155,24 @@ export async function POST(req: NextRequest) {
           description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} plan purchase`,
           reference_id: order.id,
         })
+        console.log("[Webhook] Credit transaction recorded")
 
         break
       }
 
       case "subscription.created": {
+        console.log("[Webhook] Subscription created:", event.data.id)
         const subscription = event.data
 
         const userId = getUserId(subscription)
         if (!userId) {
-          console.error("No user_id found in subscription")
+          console.error("[Webhook] No user_id found in subscription")
           break
         }
+        console.log("[Webhook] Processing subscription for user:", userId)
 
         const { plan, credits } = getPlanFromProduct(subscription.product?.name || "")
+        console.log("[Webhook] Applying plan:", plan, "Credits:", credits)
 
         const { error } = await supabaseAdmin
           .from("profiles")
@@ -159,9 +186,10 @@ export async function POST(req: NextRequest) {
           .eq("id", userId)
 
         if (error) {
-          console.error("Failed to update profile:", error)
+          console.error("[Webhook] Failed to update profile:", error)
           break
         }
+        console.log("[Webhook] Profile updated successfully")
 
         await supabaseAdmin.from("credit_transactions").insert({
           user_id: userId,
@@ -170,17 +198,23 @@ export async function POST(req: NextRequest) {
           description: `${plan.charAt(0).toUpperCase() + plan.slice(1)} plan subscription`,
           reference_id: subscription.id,
         })
+        console.log("[Webhook] Credit transaction recorded")
 
         break
       }
 
       case "subscription.updated": {
+        console.log("[Webhook] Subscription updated:", event.data.id)
         const subscription = event.data
 
         const userId = getUserId(subscription)
-        if (!userId) break
+        if (!userId) {
+          console.log("[Webhook] No user_id found in subscription update")
+          break
+        }
 
         const { plan, credits } = getPlanFromProduct(subscription.product?.name || "")
+        console.log("[Webhook] Updating to plan:", plan, "Credits:", credits)
 
         await supabaseAdmin
           .from("profiles")
@@ -192,14 +226,19 @@ export async function POST(req: NextRequest) {
           })
           .eq("id", userId)
 
+        console.log("[Webhook] Subscription updated for user:", userId)
         break
       }
 
       case "subscription.canceled": {
+        console.log("[Webhook] Subscription canceled:", event.data.id)
         const subscription = event.data
 
         const userId = getUserId(subscription)
-        if (!userId) break
+        if (!userId) {
+          console.log("[Webhook] No user_id found in subscription cancellation")
+          break
+        }
 
         await supabaseAdmin
           .from("profiles")
@@ -210,6 +249,7 @@ export async function POST(req: NextRequest) {
           })
           .eq("id", userId)
 
+        console.log("[Webhook] Subscription canceled for user:", userId)
         break
       }
 
@@ -252,10 +292,10 @@ export async function POST(req: NextRequest) {
     return new NextResponse("OK", { status: 200 })
   } catch (error) {
     if (error instanceof WebhookVerificationError) {
-      console.error("Webhook verification failed:", error.message)
+      console.error("[Webhook] Verification failed:", error.message)
       return new NextResponse("Forbidden", { status: 403 })
     }
-    console.error("Webhook error:", error)
+    console.error("[Webhook] Error processing webhook:", error)
     return new NextResponse("Internal Server Error", { status: 500 })
   }
 }
