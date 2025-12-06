@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Download, RefreshCw, Check, Sparkles } from "lucide-react"
+import { Check, Download, RefreshCw, Sparkles } from "lucide-react"
+import Image from "next/image"
+import { useState } from "react"
 import { toast } from "sonner"
 
 interface ProcessingResultProps {
@@ -18,7 +18,11 @@ export function ProcessingResult({ originalUrl, resultUrl, onReset }: Processing
   const handleDownload = async () => {
     setIsDownloading(true)
     try {
-      const response = await fetch(resultUrl)
+      const response = await fetch(resultUrl, {
+        mode: 'cors',
+        credentials: 'omit'
+      })
+      if (!response.ok) throw new Error('Download failed')
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement("a")
@@ -29,8 +33,11 @@ export function ProcessingResult({ originalUrl, resultUrl, onReset }: Processing
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
       toast.success("Image downloaded successfully")
-    } catch {
-      toast.error("Failed to download image")
+    } catch (error) {
+      console.error('Download error:', error)
+      // Fallback: open in new tab
+      window.open(resultUrl, '_blank')
+      toast.error("Opened in new tab - right-click to save")
     } finally {
       setIsDownloading(false)
     }
@@ -89,7 +96,7 @@ export function ProcessingResult({ originalUrl, resultUrl, onReset }: Processing
           <Download className="h-5 w-5" />
           {isDownloading ? "Downloading..." : "Download Result"}
         </Button>
-        <Button variant="outline" onClick={onReset} className="gap-2 h-12 text-base bg-transparent" size="lg">
+        <Button variant="outline" onClick={onReset} className="gap-2 flex-1 h-12 text-base bg-transparent" size="lg">
           <RefreshCw className="h-5 w-5" />
           Process Another
         </Button>

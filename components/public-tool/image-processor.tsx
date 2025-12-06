@@ -145,7 +145,11 @@ export function ImageProcessor({ type, title, description }: ImageProcessorProps
     if (!result) return
 
     try {
-      const response = await fetch(result)
+      const response = await fetch(result, {
+        mode: 'cors',
+        credentials: 'omit'
+      })
+      if (!response.ok) throw new Error('Download failed')
       const blob = await response.blob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement("a")
@@ -155,7 +159,8 @@ export function ImageProcessor({ type, title, description }: ImageProcessorProps
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
-    } catch {
+    } catch (error) {
+      console.error('Download error:', error)
       // Fallback: open in new tab
       window.open(result, "_blank")
     }
@@ -275,13 +280,13 @@ export function ImageProcessor({ type, title, description }: ImageProcessorProps
               </div>
             </div>
           </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 sm:gap-0 border-t border-border p-3 sm:p-4">
-            <Button variant="outline" onClick={reset} size="sm" className="w-full sm:w-auto">
-              Process Another
-            </Button>
-            <Button onClick={downloadResult} className="gap-2 w-full sm:w-auto" size="sm">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 border-t border-border p-3 sm:p-4">
+            <Button onClick={downloadResult} className="gap-2 flex-1" size="sm">
               <Download className="h-4 w-4" />
               Download Result
+            </Button>
+            <Button variant="outline" onClick={reset} size="sm" className="flex-1">
+              Process Another
             </Button>
           </div>
         </Card>

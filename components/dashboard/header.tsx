@@ -81,7 +81,7 @@ export function DashboardHeader({ profile: initialProfile }: DashboardHeaderProp
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="gap-2 px-2 hover:bg-accent/50">
               <Avatar className="h-8 w-8 ring-2 ring-border">
-                <AvatarImage src={currentProfile.avatar_url || undefined} />
+                <AvatarImage src={currentProfile.avatar_url || "/user.png"} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
                   {initials}
                 </AvatarFallback>
@@ -98,7 +98,7 @@ export function DashboardHeader({ profile: initialProfile }: DashboardHeaderProp
             <DropdownMenuLabel className="p-3">
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={currentProfile.avatar_url || undefined} />
+                  <AvatarImage src={currentProfile.avatar_url || "/user.png"} />
                   <AvatarFallback className="bg-primary text-primary-foreground">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
@@ -160,7 +160,7 @@ export function DashboardHeader({ profile: initialProfile }: DashboardHeaderProp
               className="py-2.5 text-destructive focus:text-destructive cursor-pointer"
             >
               <div className="flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-destructive/10">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
                   <LogOut className="h-4 w-4" />
                 </div>
                 <span className="font-medium">Sign out</span>

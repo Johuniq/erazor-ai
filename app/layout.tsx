@@ -3,12 +3,16 @@ import { CookieConsent } from "@/components/cookie-consent";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
-import { Geist_Mono, Inter } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import type React from "react";
 import "./globals.css";
 
-const _inter = Inter({ subsets: ["latin"] });
-const _geistMono = Geist_Mono({ subsets: ["latin"] });
+const space = Space_Grotesk({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-sans",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -246,7 +250,7 @@ export default function RootLayout({
         />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
       </head>
-      <body className="font-sans antialiased">
+      <body className={`${space.variable} font-sans antialiased`}>
         <AuthProvider>
           {children}
         </AuthProvider>

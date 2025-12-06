@@ -32,7 +32,7 @@ export function HeroSection() {
             <ArrowRight className="h-3 w-3" />
           </Badge>
 
-          <h1 className="text-balance text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl xl:text-7xl animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+          <h1 className="text-balance text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl xl:text-7xl animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
             Remove backgrounds &
             <br />
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
