@@ -1,5 +1,5 @@
+import { checkRateLimit, rateLimiters } from "@/lib/redis-rate-limiter"
 import { createClient } from "@/lib/supabase/server"
-import { rateLimiters, checkRateLimit } from "@/lib/redis-rate-limiter"
 import { Polar } from "@polar-sh/sdk"
 import { type NextRequest, NextResponse } from "next/server"
 
