@@ -1,113 +1,126 @@
+"use client"
+
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { createClient } from "@/lib/supabase/server"
-import type { ProcessingJob, Profile } from "@/lib/types"
+import { useUserStore } from "@/lib/store/user-store"
+import { createClient } from "@/lib/supabase/client"
+import type { ProcessingJob } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import {
-  ArrowRight,
-  CheckCircle2,
-  Clock,
-  Crown,
-  ImageIcon,
-  ImageMinus,
-  LayoutDashboard,
-  Maximize2,
-  Sparkles,
-  TrendingUp,
-  Zap,
+    ArrowRight,
+    CheckCircle2,
+    Clock,
+    Crown,
+    ImageIcon,
+    ImageMinus,
+    LayoutDashboard,
+    Maximize2,
+    Sparkles,
+    TrendingUp,
+    Zap,
 } from "lucide-react"
 import Link from "next/link"
-import { redirect } from "next/navigation"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
-export default async function OverviewPage() {
-  const supabase = await createClient()
+export default function OverviewPage() {
+  const router = useRouter()
+  const { profile, fetchProfile } = useUserStore()
+  const [recentJobs, setRecentJobs] = useState<ProcessingJob[]>([])
+  const [stats, setStats] = useState({
+    totalJobs: 0,
+    bgRemovalJobs: 0,
+    upscaleJobs: 0,
+    completedJobs: 0,
+  })
+  const [loading, setLoading] = useState(true)
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  useEffect(() => {
+    async function loadData() {
+      const supabase = createClient()
+      
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        router.push("/login")
+        return
+      }
 
-  if (!user) {
-    redirect("/login")
+      // Fetch profile into store
+      await fetchProfile()
+
+      // Fetch recent jobs
+      const { data: jobs } = await supabase
+        .from("processing_jobs")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(5)
+
+      setRecentJobs(jobs || [])
+
+      // Fetch job stats
+      const [total, bgRemoval, upscale, completed] = await Promise.all([
+        supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("job_type", "bg_removal"),
+        supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("job_type", "upscale"),
+        supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "completed"),
+      ])
+
+      setStats({
+        totalJobs: total.count || 0,
+        bgRemovalJobs: bgRemoval.count || 0,
+        upscaleJobs: upscale.count || 0,
+        completedJobs: completed.count || 0,
+      })
+      
+      setLoading(false)
+    }
+
+    loadData()
+  }, [])
+
+  if (loading || !profile) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    )
   }
 
-  // Fetch user profile
-  const { data: profile } = await supabase.from("profiles").select("*").eq("id", user.id).single()
+  const maxCredits = profile.plan === "enterprise" ? 2000 : profile.plan === "pro" ? 200 : 10
+  const creditsPercentage = Math.min((profile.credits / maxCredits) * 100, 100)
 
-  // Fetch recent jobs
-  const { data: recentJobs } = await supabase
-    .from("processing_jobs")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(5)
-
-  // Fetch job stats
-  const { count: totalJobs } = await supabase
-    .from("processing_jobs")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id)
-
-  const { count: bgRemovalJobs } = await supabase
-    .from("processing_jobs")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .eq("job_type", "bg_removal")
-
-  const { count: upscaleJobs } = await supabase
-    .from("processing_jobs")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .eq("job_type", "upscale")
-
-  const { count: completedJobs } = await supabase
-    .from("processing_jobs")
-    .select("*", { count: "exact", head: true })
-    .eq("user_id", user.id)
-    .eq("status", "completed")
-
-  const userProfile: Profile = profile || {
-    id: user.id,
-    email: user.email || null,
-    full_name: user.user_metadata?.full_name || null,
-    avatar_url: null,
-    credits: 10,
-    plan: "free",
-    polar_customer_id: null,
-    polar_subscription_id: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  }
-
-  const maxCredits = userProfile.plan === "enterprise" ? 2000 : userProfile.plan === "pro" ? 200 : 10
-  const creditsPercentage = Math.min((userProfile.credits / maxCredits) * 100, 100)
-
-  const stats = [
+  const statsData = [
     {
       label: "Total Processed",
-      value: totalJobs || 0,
+      value: stats.totalJobs,
       icon: ImageIcon,
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
     },
     {
       label: "BG Removals",
-      value: bgRemovalJobs || 0,
+      value: stats.bgRemovalJobs,
       icon: ImageMinus,
       color: "text-purple-500",
       bgColor: "bg-purple-500/10",
     },
     {
       label: "Upscales",
-      value: upscaleJobs || 0,
+      value: stats.upscaleJobs,
       icon: Maximize2,
       color: "text-emerald-500",
       bgColor: "bg-emerald-500/10",
     },
     {
       label: "Success Rate",
-      value: totalJobs ? `${Math.round(((completedJobs || 0) / totalJobs) * 100)}%` : "0%",
+      value: stats.totalJobs ? `${Math.round((stats.completedJobs / stats.totalJobs) * 100)}%` : "0%",
       icon: CheckCircle2,
       color: "text-amber-500",
       bgColor: "bg-amber-500/10",
@@ -142,13 +155,13 @@ export default async function OverviewPage() {
             </div>
             <div>
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
-                Welcome back, {userProfile.full_name?.split(" ")[0] || "there"}!
+                Welcome back, {profile.full_name?.split(" ")[0] || "there"}!
               </h1>
               <p className="text-sm sm:text-base text-muted-foreground">Here&apos;s an overview of your account</p>
             </div>
           </div>
         </div>
-        {userProfile.plan === "free" && (
+        {profile.plan === "free" && (
           <Button asChild className="gap-2 w-full sm:w-auto">
             <Link href="/dashboard/billing">
               <Crown className="h-4 w-4" />
@@ -170,7 +183,7 @@ export default async function OverviewPage() {
                 <div>
                   <h3 className="text-sm sm:text-base font-semibold">Available Credits</h3>
                   <p className="text-xs sm:text-sm text-muted-foreground">
-                    {userProfile.plan === "free" ? "Free plan" : `${userProfile.plan} plan`}
+                    {profile.plan === "free" ? "Free plan" : `${profile.plan} plan`}
                   </p>
                 </div>
               </div>
@@ -178,27 +191,27 @@ export default async function OverviewPage() {
                 variant="outline"
                 className={cn(
                   "capitalize",
-                  userProfile.plan === "pro" && "border-primary/30 bg-primary/10 text-primary",
-                  userProfile.plan === "enterprise" && "border-amber-500/30 bg-amber-500/10 text-amber-600",
+                  profile.plan === "pro" && "border-primary/30 bg-primary/10 text-primary",
+                  profile.plan === "enterprise" && "border-amber-500/30 bg-amber-500/10 text-amber-600",
                 )}
               >
-                {userProfile.plan}
+                {profile.plan}
               </Badge>
             </div>
             <div className="space-y-2 sm:space-y-3">
               <div className="flex items-baseline gap-1 sm:gap-2">
-                <span className="text-3xl sm:text-4xl font-bold">{userProfile.credits}</span>
+                <span className="text-3xl sm:text-4xl font-bold">{profile.credits}</span>
                 <span className="text-sm sm:text-base text-muted-foreground">/ {maxCredits} credits</span>
               </div>
               <Progress value={creditsPercentage} className="h-2" />
               <p className="text-xs sm:text-sm text-muted-foreground">
-                {userProfile.credits > 0
-                  ? `You have ${userProfile.credits} credits remaining this month`
+                {profile.credits > 0
+                  ? `You have ${profile.credits} credits remaining this month`
                   : "You've used all your credits. Upgrade for more!"}
               </p>
             </div>
           </div>
-          {userProfile.plan === "free" && (
+          {profile.plan === "free" && (
             <div className="border-t lg:border-l lg:border-t-0 border-border bg-muted/30 p-4 sm:p-6 lg:w-72">
               <div className="flex items-start gap-2 sm:gap-3 mb-4">
                 <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-accent text-primary-foreground">
@@ -222,7 +235,7 @@ export default async function OverviewPage() {
 
       {/* Stats Grid */}
       <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
+        {statsData.map((stat) => (
           <Card key={stat.label} className="border-border/60">
             <CardContent className="p-3 sm:p-4 lg:p-5">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 lg:gap-4">

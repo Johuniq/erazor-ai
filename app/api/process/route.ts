@@ -1,3 +1,5 @@
+import { verifyOrigin } from "@/lib/csrf-protection"
+import { getRateLimiter, RATE_LIMITS } from "@/lib/rate-limiter"
 import { createClient } from "@/lib/supabase/server"
 import { Polar } from "@polar-sh/sdk"
 import { type NextRequest, NextResponse } from "next/server"
@@ -13,6 +15,13 @@ const polar = new Polar({
 
 export async function POST(request: NextRequest) {
   try {
+    // CSRF protection - verify origin
+    const { valid, origin } = verifyOrigin(request)
+    if (!valid) {
+      console.warn(`[CSRF] Blocked process request from origin: ${origin || "unknown"}`)
+      return NextResponse.json({ message: "Forbidden - Invalid origin" }, { status: 403 })
+    }
+
     const supabase = await createClient()
     const {
       data: { user },
@@ -22,11 +31,49 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    // Check user credits
-    const { data: profile } = await supabase.from("profiles").select("credits").eq("id", user.id).single()
+    // Rate limiting - 20 requests per hour per user
+    const rateLimiter = getRateLimiter()
+    const rateLimit = rateLimiter.check(
+      user.id,
+      RATE_LIMITS.PROCESS_AUTH.maxRequests,
+      RATE_LIMITS.PROCESS_AUTH.windowMs
+    )
 
-    if (!profile || profile.credits < 1) {
-      return NextResponse.json({ message: "Insufficient credits. Please upgrade your plan." }, { status: 402 })
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { 
+          message: "Too many requests. Please try again later.",
+          resetAt: new Date(rateLimit.resetAt).toISOString()
+        },
+        { 
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': String(RATE_LIMITS.PROCESS_AUTH.maxRequests),
+            'X-RateLimit-Remaining': String(rateLimit.remaining),
+            'X-RateLimit-Reset': String(rateLimit.resetAt),
+          }
+        }
+      )
+    }
+
+    // Atomically check and deduct credits to prevent race conditions
+    const { data: creditResult, error: creditError } = await supabase
+      .rpc('deduct_credit', {
+        p_user_id: user.id,
+        p_amount: 1
+      })
+      .single()
+
+    if (creditError) {
+      console.error("Credit deduction error:", creditError)
+      return NextResponse.json({ message: "Failed to process credits" }, { status: 500 })
+    }
+
+    if (!creditResult || !(creditResult as any).success) {
+      return NextResponse.json({ 
+        message: "Insufficient credits. Please upgrade your plan.",
+        credits: (creditResult as any)?.credits || 0
+      }, { status: 402 })
     }
 
     const formData = await request.formData()
@@ -35,6 +82,22 @@ export async function POST(request: NextRequest) {
 
     if (!image) {
       return NextResponse.json({ message: "No image provided" }, { status: 400 })
+    }
+
+    // Server-side file validation
+    const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB max
+    if (image.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ 
+        message: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB` 
+      }, { status: 413 })
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg']
+    if (!allowedTypes.includes(image.type)) {
+      return NextResponse.json({ 
+        message: "Invalid file type. Only JPEG, PNG, and WebP are allowed" 
+      }, { status: 400 })
     }
 
     let apiKey: string | undefined
@@ -93,12 +156,6 @@ export async function POST(request: NextRequest) {
       console.error("Failed to create job:", jobError)
       return NextResponse.json({ message: "Failed to create processing job" }, { status: 500 })
     }
-
-    // Deduct credits
-    await supabase
-      .from("profiles")
-      .update({ credits: profile.credits - 1 })
-      .eq("id", user.id)
 
     // Log credit transaction
     await supabase.from("credit_transactions").insert({

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { useAuthStore } from "@/lib/store/auth-store"
 import { createClient } from "@/lib/supabase/client"
 import { Turnstile } from "@marsidev/react-turnstile"
 import { Check, Eraser, Loader2 } from "lucide-react"
@@ -26,6 +27,7 @@ export default function SignUpPage() {
   const [isGitHubLoading, setIsGitHubLoading] = useState(false)
   const [captchaToken, setCaptchaToken] = useState<string>()
   const router = useRouter()
+  const { setUser } = useAuthStore()
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -44,14 +46,26 @@ export default function SignUpPage() {
       return
     }
 
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters")
+    if (password.length < 12) {
+      toast.error("Password must be at least 12 characters")
+      setIsLoading(false)
+      return
+    }
+
+    // Check password complexity
+    const hasUpperCase = /[A-Z]/.test(password)
+    const hasLowerCase = /[a-z]/.test(password)
+    const hasNumber = /[0-9]/.test(password)
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password)
+
+    if (!hasUpperCase || !hasLowerCase || !hasNumber) {
+      toast.error("Password must contain uppercase, lowercase, and numbers")
       setIsLoading(false)
       return
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -63,6 +77,12 @@ export default function SignUpPage() {
         },
       })
       if (error) throw error
+      
+      // Update auth store if user is returned
+      if (data.user) {
+        setUser(data.user)
+      }
+      
       router.push("/signup/success")
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : "Sign up failed")

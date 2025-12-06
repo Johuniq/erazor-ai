@@ -15,47 +15,32 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useUserStore } from "@/lib/store/user-store"
 import { createClient } from "@/lib/supabase/client"
-import type { Profile } from "@/lib/types"
 import { AlertTriangle, Loader2, Mail, Save, Settings, User } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 export default function SettingsPage() {
-  const [profile, setProfile] = useState<Profile | null>(null)
+  const { currentProfile, isLoading: profileLoading, fetchProfile, setProfile } = useUserStore()
   const [fullName, setFullName] = useState("")
-  const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      const supabase = createClient()
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-
-      if (!user) {
-        router.push("/login")
-        return
-      }
-
-      const { data } = await supabase.from("profiles").select("*").eq("id", user.id).single()
-
-      if (data) {
-        setProfile(data)
-        setFullName(data.full_name || "")
-      }
-      setIsLoading(false)
-    }
-
     fetchProfile()
-  }, [router])
+  }, [fetchProfile])
+
+  useEffect(() => {
+    if (currentProfile) {
+      setFullName(currentProfile.full_name || "")
+    }
+  }, [currentProfile])
 
   const handleSave = async () => {
-    if (!profile) return
+    if (!currentProfile) return
 
     setIsSaving(true)
     const supabase = createClient()
@@ -63,18 +48,20 @@ export default function SettingsPage() {
     const { error } = await supabase
       .from("profiles")
       .update({ full_name: fullName, updated_at: new Date().toISOString() })
-      .eq("id", profile.id)
+      .eq("id", currentProfile.id)
 
     if (error) {
       toast.error("Failed to update profile")
     } else {
+      // Update the store with new data
+      setProfile({ ...currentProfile, full_name: fullName, updated_at: new Date().toISOString() })
       toast.success("Profile updated successfully")
     }
     setIsSaving(false)
   }
 
   const handleDeleteAccount = async () => {
-    if (!profile) return
+    if (!currentProfile) return
 
     setIsDeleting(true)
     const supabase = createClient()
@@ -90,7 +77,7 @@ export default function SettingsPage() {
     }
   }
 
-  if (isLoading) {
+  if (profileLoading) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="flex flex-col items-center gap-3">
@@ -135,7 +122,7 @@ export default function SettingsPage() {
               <Mail className="h-4 w-4 text-muted-foreground" />
               Email
             </Label>
-            <Input id="email" type="email" value={profile?.email || ""} disabled className="bg-muted/50 h-11" />
+            <Input id="email" type="email" value={currentProfile?.email || ""} disabled className="bg-muted/50 h-11" />
             <p className="text-xs text-muted-foreground">Email cannot be changed</p>
           </div>
           <div className="space-y-2">

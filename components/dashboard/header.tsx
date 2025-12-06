@@ -4,41 +4,58 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { createClient } from "@/lib/supabase/client"
+import { useAuthStore } from "@/lib/store/auth-store"
+import { useUserStore } from "@/lib/store/user-store"
 import type { Profile } from "@/lib/types"
 import { ChevronDown, CoinsIcon, CreditCard, LogOut, Settings, User, Zap } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 import { toast } from "sonner"
 
 interface DashboardHeaderProps {
   profile: Profile
 }
 
-export function DashboardHeader({ profile }: DashboardHeaderProps) {
+export function DashboardHeader({ profile: initialProfile }: DashboardHeaderProps) {
   const router = useRouter()
+  const { profile, setProfile, reset: resetUserStore } = useUserStore()
+  const { signOut: authSignOut, reset: resetAuthStore } = useAuthStore()
+
+  // Initialize store with server-fetched profile
+  useEffect(() => {
+    setProfile(initialProfile as any)
+  }, [initialProfile, setProfile])
+
+  // Use store profile if available, fallback to initial
+  const currentProfile = profile || initialProfile
 
   const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    toast.success("Signed out successfully")
-    router.push("/")
+    try {
+      await authSignOut()
+      resetUserStore()
+      resetAuthStore()
+      toast.success("Signed out successfully")
+      router.push("/")
+    } catch (error) {
+      toast.error("Failed to sign out")
+    }
   }
 
-  const initials = profile.full_name
-    ? profile.full_name
+  const initials = currentProfile.full_name
+    ? currentProfile.full_name
         .split(" ")
         .map((n) => n[0])
         .join("")
         .toUpperCase()
-    : profile.email?.[0]?.toUpperCase() || "U"
+    : currentProfile.email?.[0]?.toUpperCase() || "U"
 
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
@@ -54,7 +71,7 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
             className="gap-2 px-3 py-1.5 hover:bg-accent/50 transition-colors cursor-pointer border-border/60"
           >
             <CoinsIcon className="h-4 w-4 text-yellow-500" />
-            <span className="font-semibold">{profile.credits}</span>
+            <span className="font-semibold">{currentProfile.credits}</span>
             <span className="text-muted-foreground">credits</span>
           </Badge>
         </Link>
@@ -64,14 +81,14 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="gap-2 px-2 hover:bg-accent/50">
               <Avatar className="h-8 w-8 ring-2 ring-border">
-                <AvatarImage src={profile.avatar_url || undefined} />
+                <AvatarImage src={currentProfile.avatar_url || undefined} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="hidden sm:flex items-center gap-1">
                 <span className="text-sm font-medium max-w-[120px] truncate">
-                  {profile.full_name || profile.email?.split("@")[0]}
+                  {currentProfile.full_name || currentProfile.email?.split("@")[0]}
                 </span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground" />
               </div>
@@ -81,12 +98,12 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
             <DropdownMenuLabel className="p-3">
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarImage src={profile.avatar_url || undefined} />
+                  <AvatarImage src={currentProfile.avatar_url || undefined} />
                   <AvatarFallback className="bg-primary text-primary-foreground">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold truncate">{profile.full_name || "User"}</p>
-                  <p className="text-xs text-muted-foreground truncate">{profile.email}</p>
+                  <p className="font-semibold truncate">{currentProfile.full_name || "User"}</p>
+                  <p className="text-xs text-muted-foreground truncate">{currentProfile.email}</p>
                 </div>
               </div>
             </DropdownMenuLabel>
@@ -96,10 +113,10 @@ export function DashboardHeader({ profile }: DashboardHeaderProps) {
               <div className="flex items-center justify-between rounded-lg bg-accent/10 px-3 py-2">
                 <div className="flex items-center gap-2">
                   <Zap className="h-4 w-4 text-accent" />
-                  <span className="text-sm font-medium">{profile.credits} credits</span>
+                  <span className="text-sm font-medium">{currentProfile.credits} credits</span>
                 </div>
                 <Badge variant="outline" className="text-xs capitalize">
-                  {profile.plan}
+                  {currentProfile.plan}
                 </Badge>
               </div>
             </div>

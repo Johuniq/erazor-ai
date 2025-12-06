@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useProductsStore } from "@/lib/store/products-store"
 import { Check, Sparkles, Zap } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
@@ -80,23 +81,6 @@ const freePlan = {
   href: "/signup",
 }
 
-interface ProductPrice {
-  id: string
-  type: string
-  amountType: string
-  priceAmount: number | null
-  priceCurrency: string | null
-  recurringInterval: string | null
-}
-
-interface Product {
-  id: string
-  name: string
-  description: string | null
-  isRecurring: boolean
-  prices: ProductPrice[]
-}
-
 function formatPrice(amount: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -107,25 +91,11 @@ function formatPrice(amount: number) {
 
 export function PricingSection() {
   const [annual, setAnnual] = useState(false)
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const { products, isLoading, fetchProducts } = useProductsStore()
 
   useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const res = await fetch("/api/products")
-        const data = await res.json()
-        if (data.products) {
-          setProducts(data.products)
-        }
-      } catch (error) {
-        console.error("Error fetching products:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
     fetchProducts()
-  }, [])
+  }, [fetchProducts])
 
   // Filter products based on billing interval
   const filteredProducts = products.filter((product) => {
@@ -205,7 +175,7 @@ export function PricingSection() {
           </Card>
 
           {/* Dynamic Plans from API */}
-          {loading ? (
+          {isLoading ? (
             <>
               <Card className="relative flex flex-col">
                 <CardHeader className="pt-10">

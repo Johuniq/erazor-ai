@@ -1,5 +1,7 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { verifyOrigin } from "@/lib/csrf-protection"
+import { getRateLimiter, RATE_LIMITS } from "@/lib/rate-limiter"
 import { createClient } from "@supabase/supabase-js"
+import { type NextRequest, NextResponse } from "next/server"
 
 const BG_REMOVER_API = "https://api-bgremover.icons8.com/api/v1"
 const UPSCALER_API = "https://api-upscaler.icons8.com/api/v1"
@@ -11,6 +13,13 @@ function getServiceClient() {
 
 export async function POST(request: NextRequest) {
   try {
+    // CSRF protection - verify origin
+    const { valid, origin } = verifyOrigin(request)
+    if (!valid) {
+      console.warn(`[CSRF] Blocked public process request from origin: ${origin || "unknown"}`)
+      return NextResponse.json({ message: "Forbidden - Invalid origin" }, { status: 403 })
+    }
+
     const formData = await request.formData()
     const image = formData.get("image") as File
     const type = formData.get("type") as string
@@ -20,8 +29,50 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "No image provided" }, { status: 400 })
     }
 
+    // Server-side file validation
+    const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB max for free users
+    if (image.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ 
+        message: `File too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB. Sign up for larger uploads!` 
+      }, { status: 413 })
+    }
+
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg']
+    if (!allowedTypes.includes(image.type)) {
+      return NextResponse.json({ 
+        message: "Invalid file type. Only JPEG, PNG, and WebP are allowed" 
+      }, { status: 400 })
+    }
+
     if (!fingerprint) {
       return NextResponse.json({ message: "Fingerprint required" }, { status: 400 })
+    }
+
+    // Rate limiting - 5 requests per hour per fingerprint
+    const rateLimiter = getRateLimiter()
+    const rateLimit = rateLimiter.check(
+      fingerprint,
+      RATE_LIMITS.PROCESS_ANON.maxRequests,
+      RATE_LIMITS.PROCESS_ANON.windowMs
+    )
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { 
+          message: "Too many requests. Please sign up for unlimited processing!",
+          resetAt: new Date(rateLimit.resetAt).toISOString(),
+          requiresSignup: true
+        },
+        { 
+          status: 429,
+          headers: {
+            'X-RateLimit-Limit': String(RATE_LIMITS.PROCESS_ANON.maxRequests),
+            'X-RateLimit-Remaining': String(rateLimit.remaining),
+            'X-RateLimit-Reset': String(rateLimit.resetAt),
+          }
+        }
+      )
     }
 
     const supabase = getServiceClient()
@@ -51,12 +102,24 @@ export async function POST(request: NextRequest) {
       anonUser = newUser
     }
 
-    // Check credits
-    if (anonUser.credits < 1) {
+    // Atomically check and deduct credits to prevent race conditions
+    const { data: creditResult, error: creditError } = await supabase
+      .rpc('deduct_anon_credit', {
+        p_anon_user_id: anonUser.id,
+        p_amount: 1
+      })
+      .single()
+
+    if (creditError) {
+      console.error("Credit deduction error:", creditError)
+      return NextResponse.json({ message: "Failed to process credits" }, { status: 500 })
+    }
+
+    if (!creditResult || !(creditResult as any).success) {
       return NextResponse.json(
         {
           message: "No credits remaining. Sign up for more!",
-          credits: 0,
+          credits: (creditResult as any)?.credits || 0,
           requiresSignup: true,
         },
         { status: 402 },
@@ -118,12 +181,6 @@ export async function POST(request: NextRequest) {
       console.error("Failed to create job:", jobError)
       return NextResponse.json({ message: "Failed to create processing job" }, { status: 500 })
     }
-
-    // Deduct credits
-    await supabase
-      .from("anon_users")
-      .update({ credits: anonUser.credits - 1, updated_at: new Date().toISOString() })
-      .eq("id", anonUser.id)
 
     return NextResponse.json({
       job_id: result.id,

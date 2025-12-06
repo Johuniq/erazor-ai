@@ -24,9 +24,8 @@ CREATE TABLE IF NOT EXISTS anon_processing_jobs (
 ALTER TABLE anon_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE anon_processing_jobs ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies - allow all operations for anonymous users via service role
-CREATE POLICY "Allow all for anon_users" ON anon_users FOR ALL USING (true) WITH CHECK (true);
-CREATE POLICY "Allow all for anon_processing_jobs" ON anon_processing_jobs FOR ALL USING (true) WITH CHECK (true);
+-- No RLS policies needed - service role bypasses RLS
+-- These tables should only be accessed via service role in API routes
 
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_anon_users_fingerprint ON anon_users(fingerprint);

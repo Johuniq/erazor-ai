@@ -1,3 +1,4 @@
+import { AuthProvider } from "@/components/auth-provider";
 import { CookieConsent } from "@/components/cookie-consent";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
@@ -246,7 +247,9 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
       </head>
       <body className="font-sans antialiased">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <Toaster position="top-center" richColors />
         <CookieConsent />
         <Analytics />

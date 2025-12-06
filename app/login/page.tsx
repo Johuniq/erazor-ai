@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
+import { useAuthStore } from "@/lib/store/auth-store"
 import { createClient } from "@/lib/supabase/client"
 import { Turnstile } from "@marsidev/react-turnstile"
 import { Eraser, Loader2 } from "lucide-react"
@@ -24,6 +25,7 @@ export default function LoginPage() {
   const [isGitHubLoading, setIsGitHubLoading] = useState(false)
   const [captchaToken, setCaptchaToken] = useState<string>()
   const router = useRouter()
+  const { setUser } = useAuthStore()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,12 +39,18 @@ export default function LoginPage() {
     }
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
         options: { captchaToken },
       })
       if (error) throw error
+      
+      // Update auth store
+      if (data.user) {
+        setUser(data.user)
+      }
+      
       toast.success("Welcome back!")
       router.push("/dashboard")
     } catch (error: unknown) {

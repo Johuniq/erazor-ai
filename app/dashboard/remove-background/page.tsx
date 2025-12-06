@@ -3,6 +3,7 @@
 import { ImageUpload } from "@/components/dashboard/image-upload"
 import { ProcessingResult } from "@/components/dashboard/processing-result"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { useUserStore } from "@/lib/store/user-store"
 import { createClient } from "@/lib/supabase/client"
 import { getFileSizeLimit } from "@/lib/utils"
 import { ImageIcon, ImageMinus, Lightbulb, Sparkles, Zap } from "lucide-react"
@@ -16,6 +17,7 @@ export default function BackgroundRemovalPage() {
   const [originalUrl, setOriginalUrl] = useState<string>("")
   const [resultUrl, setResultUrl] = useState<string>("")
   const [userPlan, setUserPlan] = useState<string>("free")
+  const { deductCredits } = useUserStore()
 
   useEffect(() => {
     async function fetchUserPlan() {
@@ -77,6 +79,10 @@ export default function BackgroundRemovalPage() {
       const result = await pollResult(data.job_id)
       setResultUrl(result)
       setState("complete")
+      
+      // Deduct credits from store
+      deductCredits(1)
+      
       toast.success("Background removed successfully!")
     } catch (error) {
       setState("error")
