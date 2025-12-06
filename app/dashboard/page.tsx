@@ -36,58 +36,91 @@ export default function OverviewPage() {
     completedJobs: 0,
   })
   const [loading, setLoading] = useState(true)
+  const [hasInitialized, setHasInitialized] = useState(false)
 
   useEffect(() => {
+    if (hasInitialized) return
+    
+    let mounted = true
+
     async function loadData() {
-      const supabase = createClient()
-      
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) {
-        router.push("/login")
-        return
+      try {
+        setHasInitialized(true)
+        const supabase = createClient()
+        
+        const { data: { user } } = await supabase.auth.getUser()
+        
+        if (!user) {
+          router.push("/login")
+          return
+        }
+
+        // Fetch profile into store
+        await fetchProfile()
+
+        if (!mounted) return
+
+        // Fetch recent jobs
+        const { data: jobs } = await supabase
+          .from("processing_jobs")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(5)
+
+        if (!mounted) return
+        setRecentJobs(jobs || [])
+
+        // Fetch job stats
+        const [total, bgRemoval, upscale, completed] = await Promise.all([
+          supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id),
+          supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("job_type", "bg_removal"),
+          supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("job_type", "upscale"),
+          supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "completed"),
+        ])
+
+        if (!mounted) return
+        setStats({
+          totalJobs: total.count || 0,
+          bgRemovalJobs: bgRemoval.count || 0,
+          upscaleJobs: upscale.count || 0,
+          completedJobs: completed.count || 0,
+        })
+      } catch (error) {
+        console.error("Error loading dashboard data:", error)
+      } finally {
+        if (mounted) {
+          setLoading(false)
+        }
       }
-
-      // Fetch profile into store
-      await fetchProfile()
-
-      // Fetch recent jobs
-      const { data: jobs } = await supabase
-        .from("processing_jobs")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(5)
-
-      setRecentJobs(jobs || [])
-
-      // Fetch job stats
-      const [total, bgRemoval, upscale, completed] = await Promise.all([
-        supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-        supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("job_type", "bg_removal"),
-        supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("job_type", "upscale"),
-        supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "completed"),
-      ])
-
-      setStats({
-        totalJobs: total.count || 0,
-        bgRemovalJobs: bgRemoval.count || 0,
-        upscaleJobs: upscale.count || 0,
-        completedJobs: completed.count || 0,
-      })
-      
-      setLoading(false)
     }
 
     loadData()
-  }, [])
 
-  if (loading || !profile) {
+    return () => {
+      mounted = false
+    }
+  }, [hasInitialized, router, fetchProfile])
+
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
           <p className="mt-4 text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-muted-foreground">Unable to load profile. Please refresh the page.</p>
+          <Button onClick={() => window.location.reload()} className="mt-4">
+            Refresh
+          </Button>
         </div>
       </div>
     )
