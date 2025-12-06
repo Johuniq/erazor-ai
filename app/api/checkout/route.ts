@@ -1,7 +1,8 @@
-import { checkRateLimit, rateLimiters } from "@/lib/redis-rate-limiter"
+import { checkCombinedRateLimit, rateLimiters } from "@/lib/redis-rate-limiter"
 import { createClient } from "@/lib/supabase/server"
 import { Polar } from "@polar-sh/sdk"
 import { type NextRequest, NextResponse } from "next/server"
+import { z } from "zod"
 
 const polar = new Polar({
   accessToken: process.env.POLAR_ACCESS_TOKEN!,
@@ -19,8 +20,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL("/login", request.url))
     }
 
-    // Rate limiting - 10 checkout requests per hour
-    const rateLimit = await checkRateLimit(rateLimiters.checkout, user.id)
+    // Rate limiting - Check both user ID and IP (10 per hour per user + 50 per hour per IP)
+    const rateLimit = await checkCombinedRateLimit(
+      request,
+      rateLimiters.checkout,
+      user.id,
+      rateLimiters.ipAuth
+    )
     if (!rateLimit.success) {
       const origin = request.headers.get("origin") || request.nextUrl.origin
       return NextResponse.redirect(`${origin}/dashboard/billing?error=rate_limit`)
@@ -30,8 +36,18 @@ export async function GET(request: NextRequest) {
     const productId = searchParams.get("product")
     const priceId = searchParams.get("priceId")
 
+    // Validate that at least one ID is provided
     if (!productId && !priceId) {
       return NextResponse.json({ message: "Product ID or Price ID required" }, { status: 400 })
+    }
+
+    // Validate ID format (UUIDs from Polar)
+    const uuidSchema = z.string().uuid("Invalid product/price ID format")
+    if (productId && !uuidSchema.safeParse(productId).success) {
+      return NextResponse.json({ message: "Invalid product ID format" }, { status: 400 })
+    }
+    if (priceId && !uuidSchema.safeParse(priceId).success) {
+      return NextResponse.json({ message: "Invalid price ID format" }, { status: 400 })
     }
 
     // Get the origin for success/confirmation URLs

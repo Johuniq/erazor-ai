@@ -2,6 +2,7 @@
 
 import type React from "react"
 
+import { FormErrorBoundary } from "@/components/error-boundary"
 import { Icons } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -26,6 +27,11 @@ export default function SignUpPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [isGitHubLoading, setIsGitHubLoading] = useState(false)
   const [captchaToken, setCaptchaToken] = useState<string>()
+  
+  // Honeypot fields to catch bots (invisible to humans)
+  const [website, setWebsite] = useState("") // Most common honeypot field
+  const [phone, setPhone] = useState("") // Secondary honeypot
+  
   const router = useRouter()
   const { setUser } = useAuthStore()
 
@@ -33,6 +39,14 @@ export default function SignUpPage() {
     e.preventDefault()
     const supabase = createClient()
     setIsLoading(true)
+
+    // Honeypot check - if filled, it's a bot
+    if (website || phone) {
+      console.warn("[Bot Detection] Honeypot triggered - rejecting signup")
+      toast.error("Invalid submission detected")
+      setIsLoading(false)
+      return
+    }
 
     if (!captchaToken) {
       toast.error("Please complete the CAPTCHA verification")
@@ -132,15 +146,16 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-gradient-to-b from-muted/50 to-background p-6">
-      <Link href="/" className="mb-8 flex items-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-          <Eraser className="h-5 w-5 text-primary-foreground" />
-        </div>
-        <span className="text-2xl font-bold">Erazor AI</span>
-      </Link>
+    <FormErrorBoundary>
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-gradient-to-b from-muted/50 to-background p-6">
+        <Link href="/" className="mb-8 flex items-center gap-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+            <Eraser className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <span className="text-2xl font-bold">Erazor AI</span>
+        </Link>
 
-      <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Create your account</CardTitle>
           <CardDescription>Start with 10 free credits - no credit card required</CardDescription>
@@ -184,6 +199,32 @@ export default function SignUpPage() {
           </div>
 
           <form onSubmit={handleSignUp} className="space-y-4">
+            {/* Honeypot fields - hidden from users but visible to bots */}
+            <div style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }} aria-hidden="true">
+              <Label htmlFor="website">Website (leave blank)</Label>
+              <Input
+                id="website"
+                name="website"
+                type="text"
+                placeholder="https://example.com"
+                tabIndex={-1}
+                autoComplete="off"
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
+              />
+              <Label htmlFor="phone">Phone (leave blank)</Label>
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                placeholder="123-456-7890"
+                tabIndex={-1}
+                autoComplete="off"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+              />
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="fullName">Full name</Label>
               <Input
@@ -268,6 +309,7 @@ export default function SignUpPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </FormErrorBoundary>
   )
 }

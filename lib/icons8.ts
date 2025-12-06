@@ -1,3 +1,4 @@
+import { fetchPresets, fetchWithTimeout } from "./fetch-with-timeout"
 import type { Icons8BGRemovalResponse, Icons8UpscaleResponse } from "./types"
 
 const BG_REMOVER_API = "https://api-bgremover.icons8.com/api/v1"
@@ -11,9 +12,10 @@ export async function removeBackground(imageFile: File): Promise<Icons8BGRemoval
   const formData = new FormData()
   formData.append("image", imageFile)
 
-  const response = await fetch(`${BG_REMOVER_API}/process_image?token=${getBGRemoverKey()}`, {
+  const response = await fetchWithTimeout(`${BG_REMOVER_API}/process_image?token=${getBGRemoverKey()}`, {
     method: "POST",
     body: formData,
+    ...fetchPresets.long,
   })
 
   if (!response.ok) {
@@ -24,9 +26,9 @@ export async function removeBackground(imageFile: File): Promise<Icons8BGRemoval
 }
 
 export async function removeBackgroundByUrl(imageUrl: string): Promise<Icons8BGRemovalResponse> {
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${BG_REMOVER_API}/process_image?image_url=${encodeURIComponent(imageUrl)}&token=${getBGRemoverKey()}`,
-    { method: "GET" },
+    { method: "GET", ...fetchPresets.long },
   )
 
   if (!response.ok) {
@@ -37,7 +39,10 @@ export async function removeBackgroundByUrl(imageUrl: string): Promise<Icons8BGR
 }
 
 export async function getBGRemovalStatus(jobId: string): Promise<Icons8BGRemovalResponse> {
-  const response = await fetch(`${BG_REMOVER_API}/process_image/${jobId}?token=${getBGRemoverKey()}`)
+  const response = await fetchWithTimeout(
+    `${BG_REMOVER_API}/process_image/${jobId}?token=${getBGRemoverKey()}`,
+    fetchPresets.fast
+  )
 
   if (!response.ok) {
     throw new Error(`Failed to get job status: ${response.statusText}`)
@@ -51,9 +56,10 @@ export async function upscaleImage(imageFile: File): Promise<Icons8UpscaleRespon
   const formData = new FormData()
   formData.append("image", imageFile)
 
-  const response = await fetch(`${UPSCALER_API}/enhance_image?token=${getUpscalerKey()}`, {
+  const response = await fetchWithTimeout(`${UPSCALER_API}/enhance_image?token=${getUpscalerKey()}`, {
     method: "POST",
     body: formData,
+    ...fetchPresets.long,
   })
 
   if (!response.ok) {
@@ -64,9 +70,9 @@ export async function upscaleImage(imageFile: File): Promise<Icons8UpscaleRespon
 }
 
 export async function upscaleImageByUrl(imageUrl: string): Promise<Icons8UpscaleResponse> {
-  const response = await fetch(
+  const response = await fetchWithTimeout(
     `${UPSCALER_API}/enhance_image?image_url=${encodeURIComponent(imageUrl)}&token=${getUpscalerKey()}`,
-    { method: "GET" },
+    { method: "GET", ...fetchPresets.long },
   )
 
   if (!response.ok) {
@@ -77,7 +83,10 @@ export async function upscaleImageByUrl(imageUrl: string): Promise<Icons8Upscale
 }
 
 export async function getUpscaleStatus(jobId: string): Promise<Icons8UpscaleResponse> {
-  const response = await fetch(`${UPSCALER_API}/enhance_image/${jobId}?token=${getUpscalerKey()}`)
+  const response = await fetchWithTimeout(
+    `${UPSCALER_API}/enhance_image/${jobId}?token=${getUpscalerKey()}`,
+    fetchPresets.fast
+  )
 
   if (!response.ok) {
     throw new Error(`Failed to get job status: ${response.statusText}`)
@@ -87,8 +96,9 @@ export async function getUpscaleStatus(jobId: string): Promise<Icons8UpscaleResp
 }
 
 export async function reEnhanceImage(jobId: string): Promise<Icons8UpscaleResponse> {
-  const response = await fetch(`${UPSCALER_API}/enhance_image/${jobId}?token=${getUpscalerKey()}`, {
+  const response = await fetchWithTimeout(`${UPSCALER_API}/enhance_image/${jobId}?token=${getUpscalerKey()}`, {
     method: "POST",
+    ...fetchPresets.standard,
   })
 
   if (!response.ok) {

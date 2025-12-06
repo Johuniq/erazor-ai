@@ -1,5 +1,7 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { fetchPresets, fetchWithTimeout } from "@/lib/fetch-with-timeout"
+import { processingTypeSchema } from "@/lib/validations/api"
 import { createClient } from "@supabase/supabase-js"
+import { type NextRequest, NextResponse } from "next/server"
 
 const BG_REMOVER_API = "https://api-bgremover.icons8.com/api/v1"
 const UPSCALER_API = "https://api-upscaler.icons8.com/api/v1"
@@ -13,6 +15,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params
     const { searchParams } = new URL(request.url)
     const type = searchParams.get("type")
+
+    // Validate processing type
+    const typeValidation = processingTypeSchema.safeParse(type)
+    if (!typeValidation.success) {
+      return NextResponse.json({ 
+        message: "Invalid processing type" 
+      }, { status: 400 })
+    }
 
     let apiKey: string | undefined
     let apiUrl: string
@@ -28,10 +38,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     if (!apiKey) {
-      return NextResponse.json({ message: "API key not configured" }, { status: 500 })
+      return NextResponse.json({ message: "API key not configured for this service" }, { status: 500 })
     }
 
-    const apiResponse = await fetch(apiUrl)
+    // Fast timeout for status checks
+    const apiResponse = await fetchWithTimeout(apiUrl, fetchPresets.fast)
 
     if (!apiResponse.ok) {
       return NextResponse.json({ message: "Failed to get status" }, { status: 500 })

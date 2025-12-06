@@ -1,5 +1,8 @@
 import { verifyOrigin } from "@/lib/csrf-protection"
-import { checkRateLimit, getRateLimitHeaders, rateLimiters } from "@/lib/redis-rate-limiter"
+import { fetchPresets, fetchWithTimeout } from "@/lib/fetch-with-timeout"
+import { checkIdempotency, generateIdempotencyKey, hashFile, releaseIdempotentRequest } from "@/lib/idempotency"
+import { checkCombinedRateLimit, getRateLimitHeaders, rateLimiters } from "@/lib/redis-rate-limiter"
+import { fingerprintSchema, processingTypeSchema, sanitizeFilename } from "@/lib/validations/api"
 import { createClient } from "@supabase/supabase-js"
 import { type NextRequest, NextResponse } from "next/server"
 
@@ -14,9 +17,9 @@ function getServiceClient() {
 export async function POST(request: NextRequest) {
   try {
     // CSRF protection - verify origin
-    const { valid, origin } = verifyOrigin(request)
+    const { valid, origin, reason } = verifyOrigin(request)
     if (!valid) {
-      console.warn(`[CSRF] Blocked public process request from origin: ${origin || "unknown"}`)
+      console.warn(`[CSRF] Blocked public process request - ${reason || "Unknown"} (Origin: ${origin || "none"})`)
       return NextResponse.json({ message: "Forbidden - Invalid origin" }, { status: 403 })
     }
 
@@ -28,6 +31,56 @@ export async function POST(request: NextRequest) {
     if (!image) {
       return NextResponse.json({ message: "No image provided" }, { status: 400 })
     }
+
+    // Validate processing type
+    const typeValidation = processingTypeSchema.safeParse(type)
+    if (!typeValidation.success) {
+      return NextResponse.json({ 
+        message: typeValidation.error.errors[0]?.message || "Invalid processing type" 
+      }, { status: 400 })
+    }
+
+    // Validate fingerprint
+    if (!fingerprint) {
+      return NextResponse.json({ message: "Fingerprint required" }, { status: 400 })
+    }
+
+    const fingerprintValidation = fingerprintSchema.safeParse(fingerprint)
+    if (!fingerprintValidation.success) {
+      return NextResponse.json({ 
+        message: "Invalid fingerprint format" 
+      }, { status: 400 })
+    }
+
+    // Generate idempotency key using file hash + type + fingerprint
+    const fileHash = await hashFile(image)
+    const idempotencyKey = generateIdempotencyKey(fingerprint, "process", {
+      type,
+      fileHash,
+    })
+
+    // Check idempotency to prevent race conditions
+    const idempotencyCheck = await checkIdempotency(idempotencyKey)
+
+    if (!idempotencyCheck.allowed) {
+      if (idempotencyCheck.status === "processing") {
+        return NextResponse.json(
+          { 
+            message: "Request is already being processed. Please wait.",
+            status: "processing"
+          },
+          { status: 409 }
+        )
+      }
+
+      if (idempotencyCheck.status === "completed" && idempotencyCheck.result) {
+        // Return cached result
+        return NextResponse.json(idempotencyCheck.result)
+      }
+    }
+
+    // Sanitize filename to prevent directory traversal
+    const sanitizedFilename = sanitizeFilename(image.name)
 
     // Server-side file validation
     const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB max for free users
@@ -45,19 +98,23 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    if (!fingerprint) {
-      return NextResponse.json({ message: "Fingerprint required" }, { status: 400 })
-    }
-
-    // Rate limiting - 5 requests per hour per fingerprint (Redis-based)
-    const rateLimit = await checkRateLimit(rateLimiters.processAnon, fingerprint)
+    // Rate limiting - Check both fingerprint and IP address
+    // 5 requests per hour per fingerprint + 30 requests per hour per IP
+    const rateLimit = await checkCombinedRateLimit(
+      request,
+      rateLimiters.processAnon,
+      fingerprint,
+      rateLimiters.ipProcess
+    )
 
     if (!rateLimit.success) {
+      const limitType = rateLimit.limitedBy === "ip" ? "IP address" : "browser"
       return NextResponse.json(
         { 
-          message: "Too many requests. Please sign up for unlimited processing!",
+          message: `Too many requests from this ${limitType}. Please sign up for unlimited processing!`,
           resetAt: new Date(rateLimit.reset * 1000).toISOString(),
-          requiresSignup: true
+          requiresSignup: true,
+          limitedBy: rateLimit.limitedBy
         },
         { 
           status: 429,
@@ -107,6 +164,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!creditResult || !(creditResult as any).success) {
+      await releaseIdempotentRequest(idempotencyKey)
       return NextResponse.json(
         {
           message: "No credits remaining. Sign up for more!",
@@ -141,10 +199,14 @@ export async function POST(request: NextRequest) {
     const apiFormData = new FormData()
     apiFormData.append("image", image)
 
-    // Call Icons8 API
-    const apiResponse = await fetch(apiUrl, {
+    // Call Icons8 API with timeout and retry
+    const apiResponse = await fetchWithTimeout(apiUrl, {
       method: "POST",
       body: apiFormData,
+      ...fetchPresets.long, // 60s timeout for image processing
+      onRetry: (attempt, error) => {
+        console.warn(`[Icons8 Public] Retry ${attempt} for ${jobType}:`, error.message)
+      },
     })
 
     if (!apiResponse.ok) {

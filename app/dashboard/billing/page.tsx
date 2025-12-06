@@ -9,17 +9,17 @@ import { createClient } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
 import { Polar } from "@polar-sh/sdk"
 import {
-  AlertCircle,
-  ArrowRight,
-  Calendar,
-  Check,
-  CheckCircle,
-  Clock,
-  CreditCard,
-  Receipt,
-  Sparkles,
-  TrendingUp,
-  Zap,
+    AlertCircle,
+    ArrowRight,
+    Calendar,
+    Check,
+    CheckCircle,
+    Clock,
+    CreditCard,
+    Receipt,
+    Sparkles,
+    TrendingUp,
+    Zap,
 } from "lucide-react"
 import Link from "next/link"
 import { redirect } from "next/navigation"
@@ -122,38 +122,29 @@ async function getSubscription(customerId: string | null, externalId: string | n
   try {
     // Try with customerId first
     if (customerId) {
-      console.log("[Billing] Fetching subscription with customerId:", customerId)
       const result = await polar.subscriptions.list({
         customerId,
         limit: 1,
       })
-      console.log("[Billing] Subscription result:", result.result.items.length, "items")
       if (result.result.items.length > 0) {
-        console.log("[Billing] Subscription found:", JSON.stringify(result.result.items[0], null, 2))
         return result.result.items[0]
       }
     }
     
     // Fallback to external customer ID (Supabase user ID)
     if (externalId) {
-      console.log("[Billing] Trying externalId:", externalId)
       // First get customer by externalId
       try {
         const customer = await polar.customers.getExternal({ externalId })
-        console.log("[Billing] Customer found by externalId:", customer?.id)
         if (customer?.id) {
           const result = await polar.subscriptions.list({
             customerId: customer.id,
             limit: 1,
           })
-          console.log("[Billing] Subscription by externalId:", result.result.items.length, "items")
-          if (result.result.items.length > 0) {
-            console.log("[Billing] Subscription data:", JSON.stringify(result.result.items[0], null, 2))
-          }
           return result.result.items[0] || null
         }
       } catch (e) {
-        console.log("[Billing] Customer not found by externalId:", e)
+        // Customer not found by externalId, continue to return null
       }
     }
     

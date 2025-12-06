@@ -2,6 +2,7 @@
 
 import type React from "react"
 
+import { FormErrorBoundary } from "@/components/error-boundary"
 import { Icons } from "@/components/icons"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -24,6 +25,11 @@ export default function LoginPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [isGitHubLoading, setIsGitHubLoading] = useState(false)
   const [captchaToken, setCaptchaToken] = useState<string>()
+  
+  // Honeypot fields to catch bots (invisible to humans)
+  const [username, setUsername] = useState("") // Common honeypot for login forms
+  const [confirmEmail, setConfirmEmail] = useState("") // Secondary honeypot
+  
   const router = useRouter()
   const { setUser } = useAuthStore()
 
@@ -31,6 +37,14 @@ export default function LoginPage() {
     e.preventDefault()
     const supabase = createClient()
     setIsLoading(true)
+
+    // Honeypot check - if filled, it's a bot
+    if (username || confirmEmail) {
+      console.warn("[Bot Detection] Honeypot triggered - rejecting login")
+      toast.error("Invalid submission detected")
+      setIsLoading(false)
+      return
+    }
 
     if (!captchaToken) {
       toast.error("Please complete the CAPTCHA verification")
@@ -101,9 +115,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-gradient-to-b from-muted/50 to-background p-6">
-      <Link href="/" className="mb-8 flex items-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
+    <FormErrorBoundary>
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-gradient-to-b from-muted/50 to-background p-6">
+        <Link href="/" className="mb-8 flex items-center gap-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
           <Eraser className="h-5 w-5 text-primary-foreground" />
         </div>
         <span className="text-2xl font-bold">Erazor AI</span>
@@ -153,6 +168,32 @@ export default function LoginPage() {
           </div>
 
           <form onSubmit={handleLogin} className="space-y-4">
+            {/* Honeypot fields - hidden from users but visible to bots */}
+            <div style={{ position: 'absolute', left: '-9999px', opacity: 0, pointerEvents: 'none' }} aria-hidden="true">
+              <Label htmlFor="username">Username (leave blank)</Label>
+              <Input
+                id="username"
+                name="username"
+                type="text"
+                placeholder="username"
+                tabIndex={-1}
+                autoComplete="off"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+              <Label htmlFor="confirm_email">Confirm Email (leave blank)</Label>
+              <Input
+                id="confirm_email"
+                name="confirm_email"
+                type="email"
+                placeholder="confirm@example.com"
+                tabIndex={-1}
+                autoComplete="off"
+                value={confirmEmail}
+                onChange={(e) => setConfirmEmail(e.target.value)}
+              />
+            </div>
+            
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -206,6 +247,7 @@ export default function LoginPage() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </FormErrorBoundary>
   )
 }

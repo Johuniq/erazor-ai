@@ -1,5 +1,6 @@
 "use client"
 
+import { ProcessingErrorBoundary } from "@/components/error-boundary"
 import { Button } from "@/components/ui/button"
 import { cn, formatFileSize } from "@/lib/utils"
 import { CloudUpload, FileImage, ImageIcon, X } from "lucide-react"
@@ -71,18 +72,19 @@ export function ImageUpload({
   }
 
   return (
-    <div className="space-y-4">
-      {!preview ? (
-        <div
-          {...getRootProps()}
-          className={cn(
-            "relative flex min-h-[320px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-300",
-            isDragActive
-              ? "border-primary bg-primary/5 scale-[1.02]"
-              : "border-border hover:border-primary/50 hover:bg-muted/50",
-            isProcessing && "cursor-not-allowed opacity-50",
-          )}
-        >
+    <ProcessingErrorBoundary>
+      <div className="space-y-4">
+        {!preview ? (
+          <div
+            {...getRootProps()}
+            className={cn(
+              "relative flex min-h-[320px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-300",
+              isDragActive
+                ? "border-primary bg-primary/5 scale-[1.02]"
+                : "border-border hover:border-primary/50 hover:bg-muted/50",
+              isProcessing && "cursor-not-allowed opacity-50",
+            )}
+          >
           <input {...getInputProps()} />
 
           {/* Background pattern */}
@@ -163,6 +165,7 @@ export function ImageUpload({
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </ProcessingErrorBoundary>
   )
 }

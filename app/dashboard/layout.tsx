@@ -1,11 +1,12 @@
-import type React from "react"
-import { redirect } from "next/navigation"
-import { createClient } from "@/lib/supabase/server"
-import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { DashboardHeader } from "@/components/dashboard/header"
+import { DashboardSidebar } from "@/components/dashboard/sidebar"
+import { DashboardErrorBoundary } from "@/components/error-boundary"
 import { FeedbackWidget } from "@/components/feedback-widget"
 import { OnboardingModal } from "@/components/onboarding-modal"
+import { createClient } from "@/lib/supabase/server"
 import type { Profile } from "@/lib/types"
+import { redirect } from "next/navigation"
+import type React from "react"
 
 export default async function DashboardLayout({
   children,
@@ -40,14 +41,16 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <DashboardSidebar profile={userProfile} />
-      <div className="flex flex-1 flex-col">
-        <DashboardHeader profile={userProfile} />
-        <main className="flex-1 p-6">{children}</main>
+    <DashboardErrorBoundary>
+      <div className="flex min-h-screen bg-background">
+        <DashboardSidebar profile={userProfile} />
+        <div className="flex flex-1 flex-col">
+          <DashboardHeader profile={userProfile} />
+          <main className="flex-1 p-6">{children}</main>
+        </div>
+        <FeedbackWidget />
+        <OnboardingModal userId={user.id} />
       </div>
-      <FeedbackWidget />
-      <OnboardingModal userId={user.id} />
-    </div>
+    </DashboardErrorBoundary>
   )
 }

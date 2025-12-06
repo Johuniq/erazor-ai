@@ -1,6 +1,9 @@
 import { verifyOrigin } from "@/lib/csrf-protection"
-import { checkRateLimit, getRateLimitHeaders, rateLimiters } from "@/lib/redis-rate-limiter"
+import { fetchPresets, fetchWithTimeout } from "@/lib/fetch-with-timeout"
+import { checkIdempotency, completeIdempotentRequest, generateIdempotencyKey, hashFile, releaseIdempotentRequest } from "@/lib/idempotency"
+import { checkCombinedRateLimit, getRateLimitHeaders, rateLimiters } from "@/lib/redis-rate-limiter"
 import { createClient } from "@/lib/supabase/server"
+import { processingTypeSchema, sanitizeFilename } from "@/lib/validations/api"
 import { Polar } from "@polar-sh/sdk"
 import { type NextRequest, NextResponse } from "next/server"
 
@@ -16,9 +19,9 @@ const polar = new Polar({
 export async function POST(request: NextRequest) {
   try {
     // CSRF protection - verify origin
-    const { valid, origin } = verifyOrigin(request)
+    const { valid, origin, reason } = verifyOrigin(request)
     if (!valid) {
-      console.warn(`[CSRF] Blocked process request from origin: ${origin || "unknown"}`)
+      console.warn(`[CSRF] Blocked process request - ${reason || "Unknown"} (Origin: ${origin || "none"})`)
       return NextResponse.json({ message: "Forbidden - Invalid origin" }, { status: 403 })
     }
 
@@ -31,20 +34,72 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    // Rate limiting - 20 requests per hour per user (Redis-based)
-    const rateLimit = await checkRateLimit(rateLimiters.processAuth, user.id)
+    // Rate limiting - Check both user ID and IP address
+    // 20 requests per hour per user + 30 requests per hour per IP
+    const rateLimit = await checkCombinedRateLimit(
+      request,
+      rateLimiters.processAuth,
+      user.id,
+      rateLimiters.ipProcess
+    )
 
     if (!rateLimit.success) {
+      const limitType = rateLimit.limitedBy === "ip" ? "IP address" : "account"
       return NextResponse.json(
         { 
-          message: "Too many requests. Please try again later.",
-          resetAt: new Date(rateLimit.reset * 1000).toISOString()
+          message: `Too many requests from this ${limitType}. Please try again later.`,
+          resetAt: new Date(rateLimit.reset * 1000).toISOString(),
+          limitedBy: rateLimit.limitedBy
         },
         { 
           status: 429,
           headers: getRateLimitHeaders(rateLimit),
         }
       )
+    }
+
+    const formData = await request.formData()
+    const image = formData.get("image") as File
+    const type = formData.get("type") as string
+
+    if (!image) {
+      return NextResponse.json({ message: "No image provided" }, { status: 400 })
+    }
+
+    // Validate processing type
+    const typeValidation = processingTypeSchema.safeParse(type)
+    if (!typeValidation.success) {
+      return NextResponse.json({ 
+        message: typeValidation.error.errors[0]?.message || "Invalid processing type" 
+      }, { status: 400 })
+    }
+
+    // Generate idempotency key using file hash + type + user
+    // This prevents duplicate processing of the same file
+    const fileHash = await hashFile(image)
+    const idempotencyKey = generateIdempotencyKey(user.id, "process", {
+      type,
+      fileHash,
+    })
+
+    // Check idempotency to prevent race conditions
+    const idempotencyCheck = await checkIdempotency(idempotencyKey)
+
+    if (!idempotencyCheck.allowed) {
+      if (idempotencyCheck.status === "processing") {
+        return NextResponse.json(
+          { 
+            message: "Request is already being processed. Please wait.",
+            status: "processing"
+          },
+          { status: 409 }
+        )
+      }
+
+      if (idempotencyCheck.status === "completed" && idempotencyCheck.result) {
+        // Return cached result
+        return NextResponse.json(idempotencyCheck.result)
+      }
     }
 
     // Atomically check and deduct credits to prevent race conditions
@@ -61,19 +116,15 @@ export async function POST(request: NextRequest) {
     }
 
     if (!creditResult || !(creditResult as any).success) {
+      await releaseIdempotentRequest(idempotencyKey)
       return NextResponse.json({ 
         message: "Insufficient credits. Please upgrade your plan.",
         credits: (creditResult as any)?.credits || 0
       }, { status: 402 })
     }
 
-    const formData = await request.formData()
-    const image = formData.get("image") as File
-    const type = formData.get("type") as string
-
-    if (!image) {
-      return NextResponse.json({ message: "No image provided" }, { status: 400 })
-    }
+    // Sanitize filename to prevent directory traversal
+    const sanitizedFilename = sanitizeFilename(image.name)
 
     // Server-side file validation
     const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB max
@@ -115,10 +166,14 @@ export async function POST(request: NextRequest) {
     const apiFormData = new FormData()
     apiFormData.append("image", image)
 
-    // Call Icons8 API
-    const apiResponse = await fetch(apiUrl, {
+    // Call Icons8 API with timeout and retry
+    const apiResponse = await fetchWithTimeout(apiUrl, {
       method: "POST",
       body: apiFormData,
+      ...fetchPresets.long, // 60s timeout for image processing
+      onRetry: (attempt, error) => {
+        console.warn(`[Icons8] Retry ${attempt} for ${jobType}:`, error.message)
+      },
     })
 
     if (!apiResponse.ok) {
@@ -178,13 +233,22 @@ export async function POST(request: NextRequest) {
       console.error("Failed to ingest Polar event:", polarError)
     }
 
-    return NextResponse.json({
+    const response = {
       job_id: result.id,
       status: result.statusName,
       internal_job_id: job.id,
-    })
+    }
+
+    // Cache the successful result
+    await completeIdempotentRequest(idempotencyKey, response)
+
+    return NextResponse.json(response)
   } catch (error) {
     console.error("Processing error:", error)
+    // Release idempotency lock on error so user can retry
+    if (error instanceof Error && 'idempotencyKey' in error) {
+      await releaseIdempotentRequest((error as any).idempotencyKey)
+    }
     return NextResponse.json({ message: "Internal server error" }, { status: 500 })
   }
 }
