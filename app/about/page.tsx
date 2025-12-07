@@ -4,7 +4,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "About Us - Our Mission & Story | Erazor AI",
   description:
-    "Learn about Erazor AI, our mission to make professional AI-powered image editing accessible to everyone. Meet the team behind the technology.",
+    "Learn about Erazor AI, our mission to make professional AI-powered image editing tools accessible to everyone. Discover our suite of AI image enhancement features.",
   openGraph: {
     title: "About Erazor AI - Our Mission & Story",
     description:

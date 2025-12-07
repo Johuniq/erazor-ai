@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Refund Policy - 7-Day Money-Back Guarantee | Erazor AI",
+  title: "Refund Policy - 7-Day Money-Back Guarantee | Erazor AI Image Editor",
   description:
-    "Erazor AI offers a hassle-free 7-day money-back guarantee on all paid plans. Learn about our refund policy, eligibility criteria, and how to request a refund for our AI background removal service.",
+    "Erazor AI offers a hassle-free 7-day money-back guarantee on all paid plans. Learn about our refund policy, eligibility criteria, and how to request a refund for our AI image editing tools.",
   keywords: [
     "refund policy",
     "money-back guarantee",
@@ -16,17 +16,17 @@ export const metadata: Metadata = {
     "refund process",
     "billing policy",
     "subscription cancellation",
-    "AI tool refund",
+    "AI image editor refund",
     "service guarantee",
     "customer protection",
     "refund request"
   ],
   openGraph: {
-    title: "Refund Policy - 7-Day Money-Back Guarantee | Erazor AI",
+    title: "Refund Policy - 7-Day Money-Back Guarantee | Erazor AI Image Editor",
     description:
-      "Hassle-free 7-day money-back guarantee. Learn about our refund policy and how to request a refund for Erazor AI services.",
+      "Hassle-free 7-day money-back guarantee. Learn about our refund policy and how to request a refund for Erazor AI image editing services.",
     url: "https://www.erazor.app/refund",
-    siteName: "Erazor AI",
+    siteName: "Erazor AI Image Editor",
     images: [
       {
         url: "https://www.erazor.app/og-image.jpg",

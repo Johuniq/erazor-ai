@@ -26,18 +26,17 @@ export function HeroSection() {
           </div>
 
           <h1 className="text-balance text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl xl:text-7xl animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
-            Remove backgrounds &
+            Professional AI
             <br />
             <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              upscale images
+              Image Editor
             </span>
             <br />
-            in seconds
+            Remove backgrounds & upscale images
           </h1>
 
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground text-pretty sm:text-xl animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-            Professional AI image processing that just works. No signup required to try. Perfect for designers,
-            marketers, and e-commerce sellers.
+            Advanced AI-powered image editing suite. Remove backgrounds, upscale images up to 4x, and enhance photos instantly. No signup required to try. Perfect for designers, marketers, and e-commerce sellers.
           </p>
 
           {/* Trust indicators */}

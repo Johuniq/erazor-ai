@@ -2,9 +2,9 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Cookie Policy - AI Background Remover | Erazor AI',
+  title: 'Cookie Policy - AI Image Editor | Erazor AI',
   description:
-    'Learn about how Erazor AI uses cookies and similar technologies to enhance your experience with our AI background removal service. Manage your cookie preferences and understand data collection.',
+    'Learn about how Erazor AI uses cookies and similar technologies to enhance your experience with our AI image editing tools. Manage your cookie preferences and understand data collection.',
   keywords: [
     'cookie policy',
     'cookies',
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     'user preferences'
   ],
   openGraph: {
-    title: 'Cookie Policy - AI Background Remover | Erazor AI',
+    title: 'Cookie Policy - AI Image Editor | Erazor AI',
     description:
       'Transparent cookie policy for Erazor AI. Learn how we use cookies to improve your experience and manage your preferences.',
     url: '/cookie-policy',
@@ -42,9 +42,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Cookie Policy - AI Background Remover | Erazor AI',
+    title: 'Cookie Policy - AI Image Editor | Erazor AI',
     description:
-      'Transparent cookie usage and privacy controls for AI background removal service. Manage your preferences easily.',
+      'Transparent cookie usage and privacy controls for AI image editing tools. Manage your preferences easily.',
     images: ['/og-image.jpg'],
     creator: '@erazor_ai',
     site: '@erazor_ai'
@@ -616,7 +616,7 @@ export default async function CookiePolicyPage() {
                 <li>
                   <a href='/terms' className='text-primary underline hover:text-primary/80'>
                     Terms of Service
-                  </a> - Read the terms and conditions for using our AI background removal service
+                  </a> - Read the terms and conditions for using our AI image editing tools
                 </li>
               </ul>
             </section>

@@ -18,12 +18,15 @@ const space = Space_Grotesk({
 export const metadata: Metadata = {
   title: {
     default:
-      "Erazor AI - Remove Backgrounds & Upscale Images Instantly | Free AI Tool",
+      "Erazor AI - AI Image Editor | Remove Backgrounds & Upscale Images Instantly",
     template: "%s | Erazor AI",
   },
   description:
-    "Remove backgrounds and upscale images in seconds with AI. Try free - no signup required. Perfect for e-commerce, designers, and marketers. Trusted by 50,000+ users.",
+    "Professional AI-powered image editing tools. Remove backgrounds, upscale images up to 4x, and enhance photos in seconds. Free trial - no credit card required. Trusted by 50,000+ designers, marketers, and e-commerce sellers.",
   keywords: [
+    "AI image editor",
+    "AI image tools",
+    "AI photo editor",
     "background removal",
     "remove background",
     "remove background from image",
@@ -36,13 +39,18 @@ export const metadata: Metadata = {
     "AI image upscaler",
     "image enhancer",
     "increase image resolution",
+    "enhance image quality",
+    "AI image enhancement",
+    "photo enhancement",
     "AI image editing",
     "photo editing",
     "product photography",
-    "AI photo editor",
     "free background remover",
-    "online background remover",
+    "online image editor",
     "ecommerce photo editing",
+    "image processing",
+    "AI photo enhancement",
+    "professional image editing",
   ],
   authors: [{ name: "Erazor AI", url: "https://www.erazor.app" }],
   creator: "Erazor AI",
@@ -53,9 +61,9 @@ export const metadata: Metadata = {
     telephone: false,
   },
   openGraph: {
-    title: "Erazor AI - Remove Backgrounds & Upscale Images Instantly",
+    title: "Erazor AI - AI Image Editor | Remove Backgrounds & Upscale Images",
     description:
-      "Free AI-powered image processing. Remove backgrounds and upscale images in seconds. No signup required. Trusted by 50,000+ users worldwide.",
+      "Professional AI-powered image editing suite. Remove backgrounds instantly and upscale images up to 4x resolution. Free trial available. Trusted by 50,000+ professionals worldwide.",
     type: "website",
     siteName: "Erazor AI",
     locale: "en_US",
@@ -65,7 +73,7 @@ export const metadata: Metadata = {
         url: "https://www.erazor.app/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Erazor AI - AI-Powered Background Removal & Image Upscaling",
+        alt: "Erazor AI - Professional AI Image Editor with Background Removal & Upscaling",
         type: "image/jpeg",
       },
     ],
@@ -74,12 +82,12 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@erazorai",
     creator: "@erazorai",
-    title: "Erazor AI - Remove Backgrounds & Upscale Images Instantly",
+    title: "Erazor AI - AI Image Editor | Background Removal & Upscaling",
     description:
-      "Free AI-powered image processing. Remove backgrounds and upscale images in seconds. No signup required.",
+      "Professional AI-powered image editing. Remove backgrounds and upscale images up to 4x in seconds. Free trial available.",
     images: {
       url: "https://www.erazor.app/og-image.jpg",
-      alt: "Erazor AI - AI-Powered Background Removal & Image Upscaling",
+      alt: "Erazor AI - AI-Powered Image Editor",
     },
   },
   robots: {
@@ -103,7 +111,7 @@ export const metadata: Metadata = {
     },
   },
   category: "technology",
-  classification: "Image Editing Software",
+  classification: "AI Image Editing Software",
   referrer: "origin-when-cross-origin",
   verification: {
     google: "-vDPvwoV59xNhbusZ7ukVdea6H0u2K0bgqYbO3TjlKQ",
@@ -228,14 +236,17 @@ export default function RootLayout({
                     worstRating: "1",
                   },
                   description:
-                    "AI-powered background removal and image upscaling tool. Remove backgrounds and upscale images instantly.",
+                    "Professional AI-powered image editing suite. Remove backgrounds instantly, upscale images up to 4x resolution, and enhance photos with advanced AI technology.",
                   screenshot: "https://www.erazor.app/og-image.jpg",
                   featureList: [
                     "AI Background Removal",
                     "Image Upscaling up to 4x",
+                    "AI Image Enhancement",
                     "Batch Processing",
                     "API Access",
                     "HD Downloads",
+                    "Multiple Image Formats",
+                    "Professional Quality Output",
                   ],
                 },
               ],

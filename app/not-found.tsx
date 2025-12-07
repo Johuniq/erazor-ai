@@ -6,8 +6,8 @@ import type { Metadata } from "next"
 import Link from "next/link"
 
 export const metadata: Metadata = {
-  title: "Page Not Found",
-  description: "The page you're looking for doesn't exist.",
+  title: "Page Not Found | Erazor AI Image Editor",
+  description: "The page you're looking for doesn't exist. Return to Erazor AI Image Editor to access our AI-powered image editing tools.",
   robots: {
     index: false,
     follow: false,

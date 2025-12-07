@@ -1,20 +1,20 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy - AI Background Remover | Erazor AI',
+  title: 'Privacy Policy - AI Image Editor | Erazor AI',
   description:
-    'Learn how Erazor AI protects your privacy and handles your data when using our AI background removal service. GDPR compliant with secure image processing and automatic deletion.',
+    'Learn how Erazor AI protects your privacy and handles your data when using our AI image editing tools. GDPR compliant with secure image processing and automatic deletion.',
   keywords: [
     'privacy policy',
     'data protection',
-    'AI background remover privacy',
+    'AI image editor privacy',
     'image data security',
     'GDPR compliance',
     'CCPA privacy rights',
     'secure photo editing',
     'data handling policy',
     'image processing privacy',
-    'background removal privacy',
+    'AI image editing privacy',
     'AI photo editor security',
     'user data protection',
     'cookie policy',
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     'privacy rights'
   ],
   openGraph: {
-    title: 'Privacy Policy - AI Background Remover | Erazor AI',
+    title: 'Privacy Policy - AI Image Editor | Erazor AI',
     description:
       'Your privacy is our priority. Learn how we protect your data and images with secure processing, automatic deletion, and GDPR compliance.',
     url: '/privacy',
@@ -41,9 +41,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Privacy Policy - AI Background Remover | Erazor AI',
+    title: 'Privacy Policy - AI Image Editor | Erazor AI',
     description:
-      'Secure AI background removal with GDPR compliance, automatic image deletion, and strong data protection.',
+      'Secure AI image editing with GDPR compliance, automatic image deletion, and strong data protection.',
     images: ['/og-image.jpg'],
     creator: '@erazor_ai',
     site: '@erazor_ai'
@@ -99,7 +99,7 @@ export default async function PrivacyPolicyPage() {
                   &ldquo;us&rdquo;) is committed to protecting your privacy.
                   This Privacy Policy explains how we collect, use, disclose,
                   and safeguard your information when you use our AI-powered
-                  background removal service available at erazor.com (the
+                  image editing tools available at erazor.com (the
                   &ldquo;Service&rdquo;).
               </p>
               <p className="mt-3 text-muted-foreground leading-relaxed">
@@ -171,7 +171,7 @@ export default async function PrivacyPolicyPage() {
               <ul className="mt-2 list-inside list-disc space-y-1 text-muted-foreground">
                   <li>
                     <strong>Service Provision:</strong> To provide, maintain,
-                    and improve our background removal service
+                    and improve our image editing tools
                   </li>
                   <li>
                     <strong>Image Processing:</strong> To process your uploaded
@@ -481,7 +481,7 @@ export default async function PrivacyPolicyPage() {
           '@context': 'https://schema.org',
           '@type': 'WebPage',
           name: 'Privacy Policy - Erazor AI',
-          description: 'Privacy policy for Erazor AI background removal service',
+          description: 'Privacy policy for Erazor AI image editing tools',
           url: 'https://erazor.app/privacy',
           dateModified: '2025-09-14',
           publisher: {

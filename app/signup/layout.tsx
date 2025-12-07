@@ -4,7 +4,7 @@ import type React from "react";
 export const metadata: Metadata = {
   title: "Sign Up Free - Create Your Account | Erazor AI",
   description:
-    "Create a free Erazor AI account and get 10 credits to remove backgrounds and upscale images. No credit card required.",
+    "Create a free Erazor AI account and get 10 credits to use our AI image editing tools. Remove backgrounds, upscale images, and more. No credit card required.",
   openGraph: {
     title: "Sign Up Free for Erazor AI",
     description:

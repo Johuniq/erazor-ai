@@ -4,7 +4,7 @@ import type React from "react";
 export const metadata: Metadata = {
   title: "Sign In - Access Your Account | Erazor AI",
   description:
-    "Sign in to your Erazor AI account to access background removal, image upscaling, and manage your credits.",
+    "Sign in to your Erazor AI account to access our AI image editing suite including background removal, image upscaling, and more.",
   openGraph: {
     title: "Sign In to Erazor AI",
     description:

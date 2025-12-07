@@ -5,9 +5,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Free Background Remover - Remove Image Background Online | Erazor AI",
+  title: "Free AI Background Remover - Remove Image Background Online | Erazor AI",
   description:
-    "Remove backgrounds from images instantly with AI. 100% automatic, free to try, no signup required. Perfect for product photos, portraits, logos, and more. Results in seconds.",
+    "Remove backgrounds from images instantly with AI. 100% automatic, free to try, no signup required. Part of our AI image editing suite. Perfect for product photos, portraits, logos, and more.",
   keywords: [
     "remove background",
     "background remover",

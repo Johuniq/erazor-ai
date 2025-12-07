@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import type React from "react";
 
 export const metadata: Metadata = {
-  title: "Reset Password | Erazor AI",
+  title: "Reset Password | Erazor AI Image Editor",
   description:
-    "Reset your Erazor AI account password. Enter your email to receive a password reset link.",
+    "Reset your Erazor AI Image Editor account password. Enter your email to receive a password reset link.",
   robots: {
     index: false,
     follow: false,

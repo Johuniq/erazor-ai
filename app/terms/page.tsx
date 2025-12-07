@@ -2,17 +2,17 @@ import { createClient } from '@/lib/supabase/server';
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service - AI Background Remover | Erazor AI',
+  title: 'Terms of Service - AI Image Editor | Erazor AI',
   description:
-    'Read the terms and conditions for using Erazor AI background removal service. Clear guidelines for acceptable use, payment terms, privacy, and user rights.',
+    'Read the terms and conditions for using Erazor AI image editing tools. Clear guidelines for acceptable use, payment terms, privacy, and user rights.',
   keywords: [
     'terms of service',
     'terms and conditions',
-    'AI background remover terms',
+    'AI image editor terms',
     'user agreement',
     'service agreement',
     'acceptable use policy',
-    'background removal terms',
+    'image editing terms',
     'photo editing terms',
     'AI service terms',
     'subscription terms',
@@ -23,9 +23,9 @@ export const metadata: Metadata = {
     'legal agreement'
   ],
   openGraph: {
-    title: 'Terms of Service - AI Background Remover | Erazor AI',
+    title: 'Terms of Service - AI Image Editor | Erazor AI',
     description:
-      'Clear and comprehensive terms of service for Erazor AI background removal. Learn about acceptable use, payment terms, and your rights as a user.',
+      'Clear and comprehensive terms of service for Erazor AI image editing tools. Learn about acceptable use, payment terms, and your rights as a user.',
     url: '/terms',
     siteName: 'Erazor AI',
     images: [
@@ -42,9 +42,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Terms of Service - AI Background Remover | Erazor AI',
+    title: 'Terms of Service - AI Image Editor | Erazor AI',
     description:
-      'Transparent terms of service for AI background removal. Clear guidelines on usage, payments, and user rights.',
+      'Transparent terms of service for AI image editing tools. Clear guidelines on usage, payments, and user rights.',
     images: ['/og-image.jpg'],
     creator: '@erazor_ai',
     site: '@erazor_ai'
@@ -89,7 +89,7 @@ export default async function TermsOfServicePage() {
             '@context': 'https://schema.org',
             '@type': 'WebPage',
             name: 'Terms of Service - Erazor AI',
-            description: 'Terms and conditions for using Erazor AI background removal service',
+            description: 'Terms and conditions for using Erazor AI image editing tools',
             url: 'https://erazor.app/terms',
             dateModified: '2025-09-14',
             publisher: {
@@ -126,8 +126,8 @@ export default async function TermsOfServicePage() {
           __html: JSON.stringify({
             '@context': 'https://schema.org',
             '@type': 'Service',
-            name: 'Erazor AI Background Removal Service',
-            description: 'AI-powered background removal service with clear terms and conditions',
+            name: 'Erazor AI Image Editing Service',
+            description: 'AI-powered image editing tools including background removal and upscaling with clear terms and conditions',
             provider: {
               '@type': 'Organization',
               name: 'Erazor AI',
@@ -266,7 +266,7 @@ export default async function TermsOfServicePage() {
                 </p>
                 <p className='text-foreground/80 leading-relaxed'>
                   These Terms of Service (&ldquo;Terms&rdquo;) govern your use
-                  of our AI-powered background removal service available at
+                  of our AI-powered image editing tools available at
                   erazor.com (the &ldquo;Service&rdquo;) operated by Erazor AI.
                 </p>
               </section>
@@ -277,14 +277,15 @@ export default async function TermsOfServicePage() {
                   Service Description
                 </h2>
                 <p className='text-foreground/80 mb-4 leading-relaxed'>
-                  Erazor AI provides an AI-powered background removal service that
-                  allows users to automatically remove backgrounds from digital
+                  Erazor AI provides AI-powered image editing tools that
+                  allow users to automatically enhance and process digital
                   images. Our service includes:
                 </p>
                 <ul className='text-foreground/80 mb-6 list-disc space-y-2 pl-6'>
                   <li>
                     Automated background removal using artificial intelligence
                   </li>
+                  <li>AI-powered image upscaling to 4K quality</li>
                   <li>High-quality image processing with edge refinement</li>
                   <li>Batch processing capabilities for multiple images</li>
                   <li>API access for developers and businesses</li>

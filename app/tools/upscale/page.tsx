@@ -5,9 +5,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Free Image Upscaler - Upscale Images Online with AI | Erazor AI",
+  title: "Free AI Image Upscaler - Upscale Images Online with AI | Erazor AI",
   description:
-    "Upscale images up to 4x with AI. Increase image resolution while preserving quality. Free to try, no signup required. Perfect for enlarging photos, artwork, and product images.",
+    "Upscale images up to 4x with AI. Increase image resolution while preserving quality. Free to try, no signup required. Part of our AI image editing suite. Perfect for enlarging photos, artwork, and product images.",
   keywords: [
     "image upscaler",
     "upscale image",

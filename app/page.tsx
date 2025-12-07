@@ -12,6 +12,25 @@ import { UseCases } from "@/components/landing/use-cases-section"
 import type { Metadata } from "next"
 
 export const metadata: Metadata = {
+  title: "Erazor AI - Professional AI Image Editor | Remove Backgrounds & Upscale Images",
+  description: "Professional AI-powered image editing tools. Remove backgrounds instantly, upscale images to 4K, and enhance your photos with advanced AI technology. Try it free!",
+  keywords: [
+    "AI image editor",
+    "AI background remover",
+    "AI image upscaler",
+    "remove background",
+    "upscale image",
+    "AI photo editor",
+    "image editing tools",
+    "professional image editing",
+    "AI image enhancement",
+    "background removal tool",
+    "image quality enhancer",
+    "4K upscaling",
+    "online image editor",
+    "AI image processing",
+    "photo editing software"
+  ],
   alternates: {
     canonical: "https://www.erazor.app",
   },
