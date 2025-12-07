@@ -21,8 +21,9 @@ export function HeroSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
           {/* ProductHunt Badge */}
-          <div className="w-full flex items-center justify-center mb-2">
+          <div className="w-full flex items-center justify-center mb-3 gap-2">
             <a href="https://fazier.com/launches/www.erazor.app" target="_blank"><img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=featured&theme=light" width={200} height={50} alt="Fazier badge" /></a>
+            <a href="https://www.producthunt.com/products/erazor?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-erazor&#0045;ai" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1047267&theme=light&t=1765114617173" alt="Erazor&#0032;AI - AI&#0032;Image&#0032;Editing&#0032;Tool | Product Hunt" width="200" height="50" /></a>
           </div>
 
           <h1 className="text-balance text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl xl:text-7xl animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
@@ -36,7 +37,7 @@ export function HeroSection() {
           </h1>
 
           <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground text-pretty sm:text-xl animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
-            Advanced AI-powered image editing suite. Remove backgrounds, upscale images up to 4x, and enhance photos instantly. No signup required to try. Perfect for designers, marketers, and e-commerce sellers.
+            Advanced AI-powered image editing suite. Remove backgrounds, upscale images up to 4x, and enhance photos instantly. Perfect for designers, marketers, and e-commerce sellers.
           </p>
 
           {/* Trust indicators */}
