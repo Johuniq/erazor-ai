@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useUserStore } from "@/lib/store/user-store"
-import { createClient } from "@/lib/supabase/client"
 import { getFileSizeLimit } from "@/lib/utils"
 import { Crown, ImageIcon, Layers, Lightbulb, Maximize2, Sparkles } from "lucide-react"
 import Link from "next/link"
@@ -19,27 +18,25 @@ export default function UpscalePage() {
   const [state, setState] = useState<ProcessingState>("idle")
   const [originalUrl, setOriginalUrl] = useState<string>("")
   const [resultUrl, setResultUrl] = useState<string>("")
-  const [userPlan, setUserPlan] = useState<string>("free")
-  const { deductCredits } = useUserStore()
+  const { profile, fetchProfile, deductCredits } = useUserStore()
 
+  // Fetch profile if not loaded
   useEffect(() => {
-    async function fetchUserPlan() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("plan")
-          .eq("id", user.id)
-          .single()
-        if (profile?.plan) {
-          setUserPlan(profile.plan)
-        }
-      }
+    if (!profile) {
+      fetchProfile()
     }
-    fetchUserPlan()
-  }, [])
+  }, [profile, fetchProfile])
 
+  // Debug logging
+  useEffect(() => {
+    console.log('=== Upscale Debug ===')
+    console.log('Profile:', profile)
+    console.log('Plan:', profile?.plan)
+    console.log('Plan lowercase:', profile?.plan?.toLowerCase())
+    console.log('Show batch button:', profile?.plan?.toLowerCase() === "pro" || profile?.plan?.toLowerCase() === "enterprise")
+  }, [profile])
+
+  const userPlan = profile?.plan || "free"
   const maxFileSize = getFileSizeLimit(userPlan)
 
   const handleUpload = async (file: File) => {
@@ -113,7 +110,7 @@ export default function UpscalePage() {
               <p className="text-sm sm:text-base text-muted-foreground">Enhance your images to higher resolution with AI</p>
             </div>
           </div>
-          {(userPlan === "pro" || userPlan === "enterprise") && (
+          {(userPlan.toLowerCase() === "pro" || userPlan.toLowerCase() === "enterprise") && (
             <Button asChild variant="outline" size="sm" className="gap-2 shrink-0">
               <Link href="/dashboard/upscale/batch">
                 <Layers className="h-4 w-4" />
