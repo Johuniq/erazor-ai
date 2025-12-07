@@ -4,23 +4,22 @@ import { BatchUpload } from "@/components/dashboard/batch-upload"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Progress } from "@/components/ui/progress"
 import { Separator } from "@/components/ui/separator"
 import { useUserStore } from "@/lib/store/user-store"
 import { getFileSizeLimit } from "@/lib/utils"
-import { ArrowLeft, Crown, Download, Lightbulb, Lock, Maximize2, Sparkles, Zap } from "lucide-react"
-import Image from "next/image"
+import JSZip from "jszip"
+import { ArrowLeft, CheckCircle2, Crown, Download, Lightbulb, Lock, Maximize2, Sparkles, XCircle, Zap } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
 interface BatchResult {
-  originalUrl: string
-  resultUrl: string
   fileName: string
-  status: "complete" | "error"
+  status: "complete" | "error" | "processing"
   error?: string
+  blob?: Blob
 }
 
 export default function BatchUpscalePage() {
@@ -59,7 +58,11 @@ export default function BatchUpscalePage() {
 
   const handleBatchUpload = async (files: File[]) => {
     setIsProcessing(true)
-    const newResults: BatchResult[] = []
+    const newResults: BatchResult[] = files.map(file => ({
+      fileName: file.name,
+      status: "processing" as const
+    }))
+    setResults(newResults)
 
     try {
       // Process files in parallel batches of 5
@@ -67,7 +70,8 @@ export default function BatchUpscalePage() {
       for (let i = 0; i < files.length; i += batchSize) {
         const batch = files.slice(i, i + batchSize)
         
-        const promises = batch.map(async (file) => {
+        const promises = batch.map(async (file, batchIndex) => {
+          const resultIndex = i + batchIndex
           try {
             const formData = new FormData()
             formData.append("image", file)
@@ -84,21 +88,22 @@ export default function BatchUpscalePage() {
             }
 
             const data = await response.json()
+            
+            // Fetch the processed image as blob
+            const imageResponse = await fetch(data.resultUrl)
+            const blob = await imageResponse.blob()
 
             // Deduct credit
             await deductCredits(1)
 
             return {
-              originalUrl: URL.createObjectURL(file),
-              resultUrl: data.resultUrl,
               fileName: file.name,
               status: "complete" as const,
+              blob
             }
           } catch (error) {
             console.error(`Error processing ${file.name}:`, error)
             return {
-              originalUrl: URL.createObjectURL(file),
-              resultUrl: "",
               fileName: file.name,
               status: "error" as const,
               error: error instanceof Error ? error.message : "Processing failed",
@@ -107,14 +112,23 @@ export default function BatchUpscalePage() {
         })
 
         const batchResults = await Promise.all(promises)
-        newResults.push(...batchResults)
-        setResults([...newResults])
+        
+        // Update results array
+        setResults(prev => {
+          const updated = [...prev]
+          batchResults.forEach((result, batchIndex) => {
+            updated[i + batchIndex] = result
+          })
+          return updated
+        })
 
         // Show progress toast
-        toast.success(`Processed ${newResults.length} of ${files.length} images`)
+        const completedCount = results.filter(r => r.status === "complete").length + batchResults.filter(r => r.status === "complete").length
+        toast.success(`Processed ${completedCount} of ${files.length} images`)
       }
 
-      toast.success(`Batch processing complete! ${newResults.filter(r => r.status === "complete").length} images processed`)
+      const successCount = results.filter(r => r.status === "complete").length
+      toast.success(`Batch processing complete! ${successCount} images processed`)
     } catch (error) {
       console.error("Batch processing error:", error)
       toast.error("Batch processing failed")
@@ -123,16 +137,46 @@ export default function BatchUpscalePage() {
     }
   }
 
-  const downloadAll = () => {
-    results.forEach((result) => {
-      if (result.status === "complete") {
-        const link = document.createElement("a")
-        link.href = result.resultUrl
-        link.download = `upscaled-${result.fileName}`
-        link.click()
-      }
-    })
-    toast.success("Downloading all processed images")
+  const downloadAll = async () => {
+    const completedResults = results.filter(r => r.status === "complete" && r.blob)
+    
+    if (completedResults.length === 0) {
+      toast.error("No processed images to download")
+      return
+    }
+
+    try {
+      const zip = new JSZip()
+      
+      // Add each processed image to the ZIP
+      completedResults.forEach((result) => {
+        if (result.blob) {
+          const extension = result.fileName.split('.').pop()
+          const nameWithoutExt = result.fileName.replace(/\.[^/.]+$/, "")
+          zip.file(`${nameWithoutExt}_processed.${extension}`, result.blob)
+        }
+      })
+
+      // Generate the ZIP file
+      toast.loading("Creating ZIP file...")
+      const zipBlob = await zip.generateAsync({ type: "blob" })
+      
+      // Create download link
+      const url = URL.createObjectURL(zipBlob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `processed-images-${Date.now()}.zip`
+      link.click()
+      
+      // Cleanup
+      URL.revokeObjectURL(url)
+      
+      toast.dismiss()
+      toast.success(`Downloaded ${completedResults.length} images as ZIP`)
+    } catch (error) {
+      console.error("Error creating ZIP:", error)
+      toast.error("Failed to create ZIP file")
+    }
   }
 
   if (userPlan.toLowerCase() === "free") {
@@ -153,9 +197,9 @@ export default function BatchUpscalePage() {
               <p>With batch processing, you can:</p>
               <ul className="list-disc list-inside space-y-1 ml-2">
                 <li>Process up to 50 images at once</li>
-                <li>Upscale to 4K quality in bulk</li>
+                <li>Save time with parallel processing</li>
                 <li>Download all results together</li>
-                <li>Save hours of manual work</li>
+                <li>Perfect for bulk product photos</li>
               </ul>
             </div>
             <div className="flex gap-3">
@@ -165,7 +209,7 @@ export default function BatchUpscalePage() {
                 </Link>
               </Button>
               <Button asChild variant="outline">
-                <Link href="/dashboard/upscale">
+                <Link href="/dashboard/remove-background">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back
                 </Link>
@@ -229,7 +273,7 @@ export default function BatchUpscalePage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Lightbulb className="h-5 w-5 text-primary" />
-                Best Practices
+                Pro Tips
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">
@@ -239,9 +283,9 @@ export default function BatchUpscalePage() {
                     1
                   </div>
                   <div>
-                    <p className="font-medium">Best Quality</p>
+                    <p className="font-medium">Consistent Lighting</p>
                     <p className="text-muted-foreground">
-                      Works best with clean, high-quality original images
+                      Use similar lighting across all images for best results
                     </p>
                   </div>
                 </div>
@@ -251,9 +295,9 @@ export default function BatchUpscalePage() {
                     2
                   </div>
                   <div>
-                    <p className="font-medium">Similar Types</p>
+                    <p className="font-medium">High Resolution</p>
                     <p className="text-muted-foreground">
-                      Group similar images together for consistent results
+                      Higher quality inputs produce better outputs
                     </p>
                   </div>
                 </div>
@@ -263,9 +307,9 @@ export default function BatchUpscalePage() {
                     3
                   </div>
                   <div>
-                    <p className="font-medium">4K Output</p>
+                    <p className="font-medium">Organize First</p>
                     <p className="text-muted-foreground">
-                      All images upscaled to stunning 4K resolution
+                      Name your files clearly before uploading
                     </p>
                   </div>
                 </div>
@@ -285,11 +329,11 @@ export default function BatchUpscalePage() {
               </div>
               <div className="flex items-center gap-2">
                 <Maximize2 className="h-4 w-4 text-primary" />
-                <span>4K upscaling</span>
+                <span>Batch download</span>
               </div>
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
-                <span>AI enhancement</span>
+                <span>Priority queue</span>
               </div>
             </CardContent>
           </Card>
@@ -302,54 +346,72 @@ export default function BatchUpscalePage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Results</CardTitle>
+                <CardTitle>Processing Status</CardTitle>
                 <CardDescription>
-                  {results.filter(r => r.status === "complete").length} of {results.length} images upscaled
+                  {results.filter(r => r.status === "complete").length} of {results.length} images completed
                 </CardDescription>
               </div>
-              <Button onClick={downloadAll} disabled={results.filter(r => r.status === "complete").length === 0}>
+              <Button 
+                onClick={downloadAll} 
+                disabled={results.filter(r => r.status === "complete").length === 0 || isProcessing}
+              >
                 <Download className="mr-2 h-4 w-4" />
-                Download All
+                Download ZIP
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <ScrollArea className="h-[500px]">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Progress</span>
+                  <span className="font-medium">
+                    {Math.round((results.filter(r => r.status !== "processing").length / results.length) * 100)}%
+                  </span>
+                </div>
+                <Progress 
+                  value={(results.filter(r => r.status !== "processing").length / results.length) * 100} 
+                  className="h-2"
+                />
+              </div>
+              
+              <Separator />
+              
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 {results.map((result, index) => (
-                  <div key={index} className="space-y-2">
-                    <div className="relative aspect-square rounded-lg border overflow-hidden bg-muted">
-                      {result.status === "complete" ? (
-                        <Image
-                          src={result.resultUrl}
-                          alt={result.fileName}
-                          fill
-                          className="object-cover"
-                        />
-                      ) : (
-                        <div className="absolute inset-0 flex items-center justify-center text-destructive text-xs p-2 text-center">
-                          {result.error || "Failed"}
-                        </div>
-                      )}
+                  <div 
+                    key={index} 
+                    className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                  >
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <div className="shrink-0">
+                        {result.status === "complete" && (
+                          <CheckCircle2 className="h-5 w-5 text-green-500" />
+                        )}
+                        {result.status === "error" && (
+                          <XCircle className="h-5 w-5 text-destructive" />
+                        )}
+                        {result.status === "processing" && (
+                          <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{result.fileName}</p>
+                        {result.error && (
+                          <p className="text-xs text-destructive truncate">{result.error}</p>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-xs truncate">{result.fileName}</p>
-                    {result.status === "complete" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="w-full"
-                        asChild
-                      >
-                        <a href={result.resultUrl} download={`upscaled-${result.fileName}`}>
-                          <Download className="mr-2 h-3 w-3" />
-                          Download
-                        </a>
-                      </Button>
-                    )}
+                    <Badge 
+                      variant={result.status === "complete" ? "default" : result.status === "error" ? "destructive" : "secondary"}
+                      className="shrink-0 ml-2"
+                    >
+                      {result.status === "complete" ? "Done" : result.status === "error" ? "Failed" : "Processing..."}
+                    </Badge>
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           </CardContent>
         </Card>
       )}

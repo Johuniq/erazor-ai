@@ -54,6 +54,7 @@
     "embla-carousel-auto-scroll": "^8.6.0",
     "embla-carousel-react": "8.5.1",
     "input-otp": "1.4.1",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.454.0",
     "motion": "^12.23.25",
     "next": "16.0.7",
