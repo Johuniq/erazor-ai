@@ -184,10 +184,20 @@ export default function BatchBackgroundRemovalPage() {
       for (const result of completedResults) {
         if (result.resultUrl) {
           try {
-            const imageResponse = await fetch(result.resultUrl)
-            const blob = await imageResponse.blob()
+            const imageResponse = await fetch(result.resultUrl, {
+              mode: 'cors',
+              credentials: 'omit'
+            })
             
-            const extension = result.fileName.split('.').pop()
+            if (!imageResponse.ok) {
+              console.error(`Failed to fetch ${result.fileName}: ${imageResponse.status}`)
+              continue
+            }
+            
+            const blob = await imageResponse.blob()
+            console.log(`Downloaded ${result.fileName}: ${blob.size} bytes, ${blob.type}`)
+            
+            const extension = result.fileName.split('.').pop() || 'png'
             const nameWithoutExt = result.fileName.replace(/\.[^/.]+$/, "")
             zip.file(`${nameWithoutExt}_processed.${extension}`, blob)
           } catch (error) {
@@ -196,21 +206,32 @@ export default function BatchBackgroundRemovalPage() {
         }
       }
 
+      // Check if we have any files in the ZIP
+      const files = Object.keys(zip.files)
+      if (files.length === 0) {
+        toast.dismiss()
+        toast.error("No images could be downloaded")
+        return
+      }
+
       // Generate the ZIP file
       const zipBlob = await zip.generateAsync({ type: "blob" })
+      console.log(`ZIP created: ${zipBlob.size} bytes`)
       
       // Create download link
       const url = URL.createObjectURL(zipBlob)
       const link = document.createElement("a")
       link.href = url
-      link.download = `processed-images-${Date.now()}.zip`
+      link.download = `erazor-processed-${Date.now()}.zip`
+      document.body.appendChild(link)
       link.click()
       
       // Cleanup
       URL.revokeObjectURL(url)
+      document.body.removeChild(link)
       
       toast.dismiss()
-      toast.success(`Downloaded ${completedResults.length} images as ZIP`)
+      toast.success(`Downloaded ${files.length} images as ZIP`)
     } catch (error) {
       console.error("Error creating ZIP:", error)
       toast.dismiss()
