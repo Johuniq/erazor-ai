@@ -8,7 +8,7 @@ import { ChevronDown, LayoutDashboard, LogOut, Menu, Settings, User, X } from "l
 import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 
 interface HeaderProps {
@@ -21,23 +21,27 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
   const [signingOut, setSigningOut] = useState(false)
   const router = useRouter()
 
-  useEffect(() => {
-    if (signingOut) {
-      (async () => {
-        try {
-          const supabase = createClient()
-          await supabase.auth.signOut()
-          toast.success("Signed out successfully")
-          router.push("/")
-          router.refresh()
-        } catch (error) {
-          toast.error("Failed to sign out")
-        } finally {
-          setSigningOut(false)
-        }
-      })()
+  const handleSignOut = async () => {
+    if (signingOut) return // prevent double click spam
+
+    try {
+      setSigningOut(true)
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      toast.success("Signed out successfully")
+
+      // Close mobile menu if it's open
+      setMobileMenuOpen(false)
+
+      router.push("/")
+      router.refresh()
+    } catch (error) {
+      console.error(error)
+      toast.error("Failed to sign out")
+    } finally {
+      setSigningOut(false)
     }
-  }, [signingOut, router])
+  }
 
   const getInitials = (email?: string) => {
     if (!email) return "U"
@@ -124,7 +128,8 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => setSigningOut(true)}
+                  onClick={handleSignOut}
+                  disabled={signingOut}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
@@ -201,7 +206,7 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
                   <Button variant="outline" asChild>
                     <Link href="/dashboard/settings">Settings</Link>
                   </Button>
-                  <Button variant="destructive" onClick={() => setSigningOut(true)}>
+                  <Button variant="destructive" onClick={handleSignOut} disabled={signingOut} className="mt-1">
                     <LogOut className="mr-2 h-4 w-4" />
                     Sign out
                   </Button>
