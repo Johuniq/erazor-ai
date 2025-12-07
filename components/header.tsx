@@ -116,7 +116,14 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive focus:text-destructive">
+                <DropdownMenuItem 
+                  onClick={handleSignOut} 
+                  className="cursor-pointer text-destructive focus:text-destructive"
+                  onSelect={(e) => {
+                    e.preventDefault()
+                    handleSignOut()
+                  }}
+                >
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign out
                 </DropdownMenuItem>
