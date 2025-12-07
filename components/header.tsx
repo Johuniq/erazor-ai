@@ -117,7 +117,8 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
-                  onClick={async () => {
+                  onSelect={async (event) => {
+                    event.preventDefault();
                     await handleSignOut();
                     window.location.reload();
                   }}
