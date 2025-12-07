@@ -29,7 +29,7 @@ export default async function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <ProductHuntBanner />
-      <Header isLoggedIn={!!user} />
+      <Header isLoggedIn={!!user} userEmail={user?.email} />
       <main className="flex-1">
         <HeroSection />
         <LogosSection />
