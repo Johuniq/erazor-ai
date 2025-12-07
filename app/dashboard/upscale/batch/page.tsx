@@ -118,7 +118,12 @@ export default function BatchUpscalePage() {
             }
 
             const resultUrl = await pollResult(data.job_id)
-            console.log(`Result URL for ${file.name}:`, resultUrl)
+            console.log(`✅ Result URL for ${file.name}:`, resultUrl)
+            console.log(`✅ Creating result object:`, {
+              fileName: file.name,
+              status: "complete",
+              resultUrl
+            })
 
             return {
               fileName: file.name,
@@ -136,6 +141,7 @@ export default function BatchUpscalePage() {
         })
 
         const batchResults = await Promise.all(promises)
+        console.log(`📦 Batch results:`, batchResults)
         
         // Update results array
         setResults(prev => {
@@ -143,6 +149,7 @@ export default function BatchUpscalePage() {
           batchResults.forEach((result, batchIndex) => {
             updated[i + batchIndex] = result
           })
+          console.log(`📝 Updated results array:`, updated)
           return updated
         })
 
@@ -168,9 +175,12 @@ export default function BatchUpscalePage() {
   }
 
   const downloadAll = async () => {
+    console.log(`🔍 All results:`, results)
     const completedResults = results.filter(r => r.status === "complete" && r.resultUrl)
+    console.log(`✅ Completed results with URLs:`, completedResults)
     
     if (completedResults.length === 0) {
+      console.error(`❌ No completed results found. Results:`, results)
       toast.error("No processed images to download")
       return
     }
