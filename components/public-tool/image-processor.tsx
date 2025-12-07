@@ -14,26 +14,39 @@ interface ImageProcessorProps {
   type: "bg_removal" | "upscale"
   title: string
   description: string
+  isAuthenticated?: boolean
+  userCredits?: number
 }
 
-export function ImageProcessor({ type, title, description }: ImageProcessorProps) {
+export function ImageProcessor({ type, title, description, isAuthenticated = false, userCredits }: ImageProcessorProps) {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
   const [result, setResult] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const [credits, setCredits] = useState<number | null>(null)
+  const [credits, setCredits] = useState<number | null>(isAuthenticated && userCredits !== undefined ? userCredits : null)
   const [requiresSignup, setRequiresSignup] = useState(false)
   const [fingerprint, setFingerprint] = useState<string | null>(null)
 
-  // Generate fingerprint on mount
+  // Generate fingerprint on mount (only for anonymous users)
   useEffect(() => {
-    generateFingerprint().then(setFingerprint)
-  }, [])
+    if (!isAuthenticated) {
+      generateFingerprint().then(setFingerprint)
+    }
+  }, [isAuthenticated])
 
-  // Check credits on mount
+  // Check credits on mount (only for anonymous users)
   useEffect(() => {
+    // If authenticated, use userCredits passed from server
+    if (isAuthenticated) {
+      if (userCredits !== undefined) {
+        setCredits(userCredits)
+      }
+      return
+    }
+
+    // For anonymous users, fetch credits using fingerprint
     if (!fingerprint) return
 
     fetch("/api/public/credits", {
@@ -54,7 +67,7 @@ export function ImageProcessor({ type, title, description }: ImageProcessorProps
         console.error('Credits fetch error:', error)
         setCredits(3) // Fallback to default
       })
-  }, [fingerprint])
+  }, [fingerprint, isAuthenticated, userCredits])
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
@@ -79,7 +92,9 @@ export function ImageProcessor({ type, title, description }: ImageProcessorProps
   })
 
   const processImage = async () => {
-    if (!file || !fingerprint) return
+    if (!file) return
+    // For authenticated users, we don't need fingerprint
+    if (!isAuthenticated && !fingerprint) return
 
     setProcessing(true)
     setProgress(10)
@@ -89,9 +104,16 @@ export function ImageProcessor({ type, title, description }: ImageProcessorProps
       const formData = new FormData()
       formData.append("image", file)
       formData.append("type", type)
-      formData.append("fingerprint", fingerprint)
+      
+      // Use authenticated API if user is logged in, otherwise use public API
+      const apiEndpoint = isAuthenticated ? "/api/process" : "/api/public/process"
+      
+      // Only add fingerprint for anonymous users
+      if (!isAuthenticated && fingerprint) {
+        formData.append("fingerprint", fingerprint)
+      }
 
-      const response = await fetch("/api/public/process", {
+      const response = await fetch(apiEndpoint, {
         method: "POST",
         body: formData,
       })
@@ -107,22 +129,36 @@ export function ImageProcessor({ type, title, description }: ImageProcessorProps
       }
 
       setProgress(30)
-      // Ensure credits_remaining is a valid number
-      const remainingCredits = typeof data.credits_remaining === 'number' 
-        ? data.credits_remaining 
-        : (credits !== null ? Math.max(0, credits - 1) : 0)
-      setCredits(remainingCredits)
+      
+      // Update credits based on response
+      if (isAuthenticated) {
+        // For authenticated users, decrement locally (server already deducted)
+        if (credits !== null && credits > 0) {
+          setCredits(credits - 1)
+        }
+      } else {
+        // For anonymous users, use credits_remaining from response
+        const remainingCredits = typeof data.credits_remaining === 'number' 
+          ? data.credits_remaining 
+          : (credits !== null ? Math.max(0, credits - 1) : 0)
+        setCredits(remainingCredits)
+      }
 
       // Poll for result
       const jobId = data.job_id
       let attempts = 0
       const maxAttempts = 60
 
+      // Use different status endpoints for authenticated vs anonymous users
+      const statusEndpoint = isAuthenticated 
+        ? `/api/process/${jobId}?type=${type}`
+        : `/api/public/process/${jobId}?type=${type}`
+
       while (attempts < maxAttempts) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
         setProgress(Math.min(30 + (attempts / maxAttempts) * 60, 90))
 
-        const statusRes = await fetch(`/api/public/process/${jobId}?type=${type}`)
+        const statusRes = await fetch(statusEndpoint)
         const statusData = await statusRes.json()
 
         if (statusData.status === "completed" && statusData.result_url) {
@@ -187,9 +223,14 @@ export function ImageProcessor({ type, title, description }: ImageProcessorProps
         <Badge variant={credits === 0 ? "destructive" : "secondary"} className="text-xs sm:text-sm">
           {credits !== null ? `${credits} credits remaining` : "Loading..."}
         </Badge>
-        {credits !== null && credits < 3 && (
+        {credits !== null && credits < 3 && !isAuthenticated && (
           <Link href="/signup" className="text-xs sm:text-sm text-primary hover:underline">
             Sign up for more credits
+          </Link>
+        )}
+        {isAuthenticated && (
+          <Link href="/dashboard/billing" className="text-xs sm:text-sm text-primary hover:underline">
+            Get more credits
           </Link>
         )}
       </div>

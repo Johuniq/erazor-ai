@@ -144,6 +144,17 @@ export default async function UpscalePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Fetch user profile if authenticated
+  let userProfile = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("credits")
+      .eq("id", user.id)
+      .single();
+    userProfile = profile;
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <script
@@ -184,6 +195,8 @@ export default async function UpscalePage() {
             type="upscale"
             title="Image Upscaling"
             description="Upload an image to enhance its resolution"
+            isAuthenticated={!!user}
+            userCredits={userProfile?.credits}
           />
 
           {/* Features */}
