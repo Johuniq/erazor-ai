@@ -58,11 +58,11 @@ export default function BatchUpscalePage() {
 
   const handleBatchUpload = async (files: File[]) => {
     setIsProcessing(true)
-    const newResults: BatchResult[] = files.map(file => ({
+    let currentResults: BatchResult[] = files.map((file) => ({
       fileName: file.name,
-      status: "processing" as const
+      status: "processing" as const,
     }))
-    setResults(newResults)
+    setResults(currentResults)
 
     try {
       // Process files in parallel batches of 5
@@ -142,23 +142,21 @@ export default function BatchUpscalePage() {
 
         const batchResults = await Promise.all(promises)
         console.log(`📦 Batch results:`, batchResults)
-        
-        // Update results array
-        setResults(prev => {
-          const updated = [...prev]
-          batchResults.forEach((result, batchIndex) => {
-            updated[i + batchIndex] = result
-          })
-          console.log(`📝 Updated results array:`, updated)
-          return updated
+
+        batchResults.forEach((result, batchIndex) => {
+          const targetIndex = i + batchIndex
+          currentResults[targetIndex] = result
         })
+        currentResults = [...currentResults]
+        console.log(`📝 Updated results array:`, currentResults)
+        setResults(currentResults)
 
         // Show progress toast
-        const completedCount = results.filter(r => r.status === "complete").length + batchResults.filter(r => r.status === "complete").length
+        const completedCount = currentResults.filter((r) => r.status === "complete").length
         toast.success(`Processed ${completedCount} of ${files.length} images`)
       }
 
-      const successCount = results.filter(r => r.status === "complete").length
+      const successCount = currentResults.filter((r) => r.status === "complete").length
       
       // Deduct credits from store to update UI (API already deducted from DB)
       if (successCount > 0) {
