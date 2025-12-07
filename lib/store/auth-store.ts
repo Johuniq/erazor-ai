@@ -55,21 +55,47 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
 
   signOut: async () => {
+    console.log('Starting signOut...')
+    
     try {
       const supabase = createClient()
-      const { error } = await supabase.auth.signOut()
+      console.log('Supabase client created')
       
-      if (error) throw error
+      // Clear session from storage first (synchronous, always works)
+      if (typeof window !== 'undefined') {
+        // Clear Supabase auth tokens from localStorage
+        const keysToRemove: string[] = []
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i)
+          if (key && (key.startsWith('sb-') || key.includes('supabase.auth'))) {
+            keysToRemove.push(key)
+          }
+        }
+        keysToRemove.forEach(key => {
+          console.log('Removing localStorage key:', key)
+          localStorage.removeItem(key)
+        })
+      }
       
-      // Reset store state
+      // Try to call Supabase signOut but don't wait for it
+      supabase.auth.signOut().catch(err => {
+        console.log('SignOut API call failed (non-blocking):', err)
+      })
+      
+      console.log('Session cleared, resetting store and redirecting...')
+      
+      // Reset store state immediately
       set({ 
         user: null, 
         isAuthenticated: false,
         error: null 
       })
       
-      // Hard redirect to clear all state
-      window.location.href = '/'
+      // Redirect immediately
+      console.log('Redirecting to home...')
+      if (typeof window !== 'undefined') {
+        window.location.href = '/'
+      }
     } catch (error) {
       console.error('Error signing out:', error)
       set({ 

@@ -39,9 +39,12 @@ export function DashboardHeader({ profile: initialProfile }: DashboardHeaderProp
 
   const handleSignOut = async () => {
     try {
+      console.log('Dashboard signOut clicked')
       toast.success("Signing out...")
+      // Reset stores first
       resetUserStore()
       resetAuthStore()
+      // Call signOut which will redirect
       await authSignOut()
     } catch (error) {
       console.error('Sign out error:', error)

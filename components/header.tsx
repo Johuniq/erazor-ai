@@ -25,6 +25,7 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
     if (signingOut) return // prevent double click spam
 
     try {
+      console.log('Header signOut clicked')
       setSigningOut(true)
       
       // Close mobile menu and dropdown if open
@@ -34,7 +35,7 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
       toast.success("Signing out...")
       await signOut()
     } catch (error) {
-      console.error(error)
+      console.error('Header signOut error:', error)
       toast.error("Failed to sign out")
       setSigningOut(false)
     }

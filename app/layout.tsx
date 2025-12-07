@@ -2,7 +2,6 @@ import { AuthProvider } from "@/components/auth-provider";
 import { CookieConsent } from "@/components/cookie-consent";
 import { RootClient } from "@/components/RootClient";
 import { Toaster } from "@/components/ui/sonner";
-import { createClient } from "@/lib/supabase/server";
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Space_Grotesk } from "next/font/google";
@@ -124,16 +123,11 @@ export const viewport: Viewport = {
   colorScheme: "light dark",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -251,7 +245,7 @@ export default async function RootLayout({
       </head>
       <body className={`${space.variable} font-sans antialiased`}>
         <AuthProvider>
-          <RootClient isLoggedIn={!!user} userEmail={user?.email}>
+          <RootClient>
             {children}
           </RootClient>
         </AuthProvider>
