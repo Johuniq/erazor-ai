@@ -22,7 +22,7 @@ export function HeroSection() {
         <div className="mx-auto max-w-4xl text-center">
           {/* ProductHunt Badge */}
           <div className="w-full flex items-center justify-center mb-2">
-            <a href="https://fazier.com/launches/www.erazor.app" target="_blank"><img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=featured&theme=dark" width={200} height={50} alt="Fazier badge" /></a>
+            <a href="https://fazier.com/launches/www.erazor.app" target="_blank"><img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=featured&theme=light" width={200} height={50} alt="Fazier badge" /></a>
           </div>
 
           <h1 className="text-balance text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl xl:text-7xl animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
