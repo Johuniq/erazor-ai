@@ -61,47 +61,79 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       const supabase = createClient()
       console.log('Supabase client created')
       
-      // Clear session from storage first (synchronous, always works)
+      // Clear all storage immediately BEFORE calling signOut
       if (typeof window !== 'undefined') {
-        // Clear Supabase auth tokens from localStorage
+        console.log('Clearing storage before API call...')
+        
+        // Clear localStorage
         const keysToRemove: string[] = []
         for (let i = 0; i < localStorage.length; i++) {
           const key = localStorage.key(i)
-          if (key && (key.startsWith('sb-') || key.includes('supabase.auth'))) {
+          if (key) {
             keysToRemove.push(key)
           }
         }
         keysToRemove.forEach(key => {
-          console.log('Removing localStorage key:', key)
-          localStorage.removeItem(key)
+          if (key.startsWith('sb-') || key.includes('supabase')) {
+            console.log('Removing:', key)
+            localStorage.removeItem(key)
+          }
         })
+        
+        // Clear sessionStorage
+        sessionStorage.clear()
+        
+        // Clear all Supabase cookies
+        const cookies = document.cookie.split(";")
+        for (const cookie of cookies) {
+          const name = cookie.split("=")[0].trim()
+          if (name.startsWith('sb-') || name.includes('auth-token')) {
+            console.log('Clearing cookie:', name)
+            // Clear for current domain
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`
+            // Clear for parent domain
+            const domain = window.location.hostname
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${domain};`
+            document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${domain};`
+          }
+        }
       }
       
-      // Try to call Supabase signOut but don't wait for it
-      supabase.auth.signOut().catch(err => {
-        console.log('SignOut API call failed (non-blocking):', err)
-      })
+      console.log('Storage cleared, calling API...')
       
-      console.log('Session cleared, resetting store and redirecting...')
+      // Now try to call the API (but storage is already cleared so user will be logged out anyway)
+      try {
+        await Promise.race([
+          supabase.auth.signOut({ scope: 'local' }),
+          new Promise((resolve) => setTimeout(resolve, 1000))
+        ])
+        console.log('API call completed')
+      } catch (apiError) {
+        console.log('API call failed, but storage already cleared:', apiError)
+      }
       
-      // Reset store state immediately
+      console.log('Resetting store state...')
+      
+      // Reset store state
       set({ 
         user: null, 
         isAuthenticated: false,
         error: null 
       })
       
-      // Redirect immediately
+      // Redirect with cache busting
       console.log('Redirecting to home...')
       if (typeof window !== 'undefined') {
-        window.location.href = '/'
+        setTimeout(() => {
+          window.location.href = '/'
+        }, 100)
       }
     } catch (error) {
       console.error('Error signing out:', error)
-      set({ 
-        error: error instanceof Error ? error.message : 'Failed to sign out'
-      })
-      throw error
+      // Even if there's an error, try to redirect anyway
+      if (typeof window !== 'undefined') {
+        window.location.href = '/'
+      }
     }
   },
 
