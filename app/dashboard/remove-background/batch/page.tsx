@@ -193,9 +193,12 @@ export default function BatchBackgroundRemovalPage() {
       for (const result of completedResults) {
         if (result.resultUrl) {
           try {
-            const imageResponse = await fetch(result.resultUrl, {
-              mode: 'cors',
-              credentials: 'omit'
+            const imageResponse = await fetch("/api/download", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ url: result.resultUrl }),
             })
             
             if (!imageResponse.ok) {
