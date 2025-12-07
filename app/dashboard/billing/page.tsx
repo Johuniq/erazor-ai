@@ -9,17 +9,17 @@ import { createClient } from "@/lib/supabase/server"
 import { cn } from "@/lib/utils"
 import { Polar } from "@polar-sh/sdk"
 import {
-    AlertCircle,
-    ArrowRight,
-    Calendar,
-    Check,
-    CheckCircle,
-    Clock,
-    CreditCard,
-    Receipt,
-    Sparkles,
-    TrendingUp,
-    Zap,
+  AlertCircle,
+  ArrowRight,
+  Calendar,
+  Check,
+  CheckCircle,
+  Clock,
+  CreditCard,
+  Receipt,
+  Sparkles,
+  TrendingUp,
+  Zap,
 } from "lucide-react"
 import Link from "next/link"
 import { redirect } from "next/navigation"
@@ -58,6 +58,7 @@ const planBenefits: Record<string, { monthly: string[]; yearly: string[] }> = {
     monthly: [
       "200 credits/month",
       "Background removal",
+      "Batch processing",
       "Image upscaling (4x)",
       "HD quality export",
       "Priority processing",
@@ -67,6 +68,7 @@ const planBenefits: Record<string, { monthly: string[]; yearly: string[] }> = {
     yearly: [
       "2600 credits/year (~217/month)",
       "Background removal",
+      "Batch processing",
       "Image upscaling (4x)",
       "HD quality export",
       "Priority processing",

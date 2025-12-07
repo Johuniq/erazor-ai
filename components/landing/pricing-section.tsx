@@ -31,6 +31,7 @@ const planBenefits: Record<string, { monthly: string[]; yearly: string[] }> = {
     monthly: [
       "100 credits/month",
       "Background removal",
+      "Batch processing",
       "Image upscaling (4x)",
       "HD quality export",
       "Priority processing",
@@ -40,6 +41,7 @@ const planBenefits: Record<string, { monthly: string[]; yearly: string[] }> = {
     yearly: [
       "1300 credits/year (~109/month)",
       "Background removal",
+      "Batch processing",
       "Image upscaling (4x)",
       "HD quality export",
       "Priority processing",
