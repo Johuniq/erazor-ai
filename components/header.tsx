@@ -3,11 +3,10 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { createClient } from "@/lib/supabase/client"
+import { useAuthStore } from "@/lib/store/auth-store"
 import { ChevronDown, LayoutDashboard, LogOut, Menu, Settings, User, X } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { toast } from "sonner"
 
@@ -20,28 +19,20 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
-  const router = useRouter()
+  const { signOut } = useAuthStore()
 
   const handleSignOut = async () => {
     if (signingOut) return // prevent double click spam
 
     try {
       setSigningOut(true)
-      const supabase = createClient()
-      const { error } = await supabase.auth.signOut()
       
-      if (error) {
-        throw error
-      }
-
       // Close mobile menu and dropdown if open
       setMobileMenuOpen(false)
       setDropdownOpen(false)
 
-      toast.success("Signed out successfully")
-      
-      // Use window.location for a hard refresh to clear all state
-      window.location.href = "/"
+      toast.success("Signing out...")
+      await signOut()
     } catch (error) {
       console.error(error)
       toast.error("Failed to sign out")

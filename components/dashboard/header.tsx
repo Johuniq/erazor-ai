@@ -39,12 +39,12 @@ export function DashboardHeader({ profile: initialProfile }: DashboardHeaderProp
 
   const handleSignOut = async () => {
     try {
-      await authSignOut()
+      toast.success("Signing out...")
       resetUserStore()
       resetAuthStore()
-      toast.success("Signed out successfully")
-      router.push("/")
+      await authSignOut()
     } catch (error) {
+      console.error('Sign out error:', error)
       toast.error("Failed to sign out")
     }
   }

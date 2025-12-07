@@ -57,18 +57,25 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   signOut: async () => {
     try {
       const supabase = createClient()
-      await supabase.auth.signOut()
+      const { error } = await supabase.auth.signOut()
       
+      if (error) throw error
+      
+      // Reset store state
       set({ 
         user: null, 
         isAuthenticated: false,
         error: null 
       })
+      
+      // Hard redirect to clear all state
+      window.location.href = '/'
     } catch (error) {
       console.error('Error signing out:', error)
       set({ 
         error: error instanceof Error ? error.message : 'Failed to sign out'
       })
+      throw error
     }
   },
 
