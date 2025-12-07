@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { Footer } from "./footer";
 import { Header } from "./header";
+import { Banner } from "./landing/banner";
 
 export function RootClient({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -11,6 +12,7 @@ export function RootClient({ children }: { children: React.ReactNode }) {
   return (
     <>
       {!inDashboard && <Header />}
+      {!inDashboard && <Banner />}
       {children}
       {!inDashboard && <Footer />}
     </>

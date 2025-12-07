@@ -1,6 +1,5 @@
 import { AuthProvider } from "@/components/auth-provider";
 import { CookieConsent } from "@/components/cookie-consent";
-import { ProductHuntBanner } from "@/components/landing/product-hunt-banner";
 import { RootClient } from "@/components/RootClient";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
@@ -246,7 +245,6 @@ export default function RootLayout({
       </head>
       <body className={`${space.variable} font-sans antialiased`}>
         <AuthProvider>
-          <ProductHuntBanner />
           <RootClient>
             {children}
           </RootClient>

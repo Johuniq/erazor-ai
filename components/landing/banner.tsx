@@ -4,7 +4,7 @@ import { ArrowUpRight, X } from "lucide-react"
 import Link from "next/link"
 import { useEffect, useState } from "react"
 
-export function ProductHuntBanner() {
+export function Banner() {
   const [dismissed, setDismissed] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
 
