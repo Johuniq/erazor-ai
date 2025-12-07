@@ -89,8 +89,28 @@ export default function BatchBackgroundRemovalPage() {
 
             const data = await response.json()
             
+            // Poll for result
+            const pollResult = async (jobId: string): Promise<string> => {
+              const statusResponse = await fetch(`/api/process/${jobId}?type=bg_removal`)
+              const statusData = await statusResponse.json()
+
+              if (statusData.status === "completed" && statusData.result_url) {
+                return statusData.result_url
+              } else if (statusData.status === "failed") {
+                throw new Error("Processing failed")
+              }
+
+              await new Promise((resolve) => setTimeout(resolve, 2000))
+              return pollResult(jobId)
+            }
+
+            const resultUrl = await pollResult(data.job_id)
+            
             // Fetch the processed image as blob
-            const imageResponse = await fetch(data.resultUrl)
+            const imageResponse = await fetch(resultUrl)
+            if (!imageResponse.ok) {
+              throw new Error("Failed to download processed image")
+            }
             const blob = await imageResponse.blob()
 
             // Deduct credit
