@@ -6,10 +6,8 @@ import { CDN_URL } from "@/constants/data"
 import { ArrowRight, CheckCircle2, ImageMinus, Maximize2, Sparkles } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { useState } from "react"
 
 export function HeroSection() {
-  const [showDemo, setShowDemo] = useState(false)
 
   return (
     <section className="relative overflow-hidden pt-12 pb-20 sm:pt-20 sm:pb-28">

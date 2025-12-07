@@ -1,5 +1,3 @@
-import { Footer } from "@/components/footer";
-import { Header } from "@/components/header";
 import { ImageProcessor } from "@/components/public-tool/image-processor";
 import { createClient } from "@/lib/supabase/server";
 import { CheckCircle2, Maximize2 } from "lucide-react";
@@ -173,7 +171,6 @@ export default async function UpscalePage() {
           __html: JSON.stringify(breadcrumbStructuredData),
         }}
       />
-      <Header isLoggedIn={!!user} userEmail={user?.email} />
       <main className="flex-1">
         <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 lg:py-16 lg:px-8">
           {/* Header */}
@@ -290,7 +287,6 @@ export default async function UpscalePage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

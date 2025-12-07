@@ -1,6 +1,3 @@
-import { Footer } from "@/components/footer";
-import { Header } from "@/components/header";
-import { createClient } from "@/lib/supabase/server";
 import { Eraser, Heart, Target, Zap } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -35,15 +32,8 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function AboutPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+export default function AboutPage() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header isLoggedIn={!!user} />
       <main className="flex-1">
         <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
           {/* Hero */}
@@ -148,7 +138,5 @@ export default async function AboutPage() {
           </div>
         </div>
       </main>
-      <Footer />
-    </div>
   );
 }

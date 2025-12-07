@@ -1,7 +1,4 @@
 
-import { Footer } from "@/components/footer";
-import { Header } from "@/components/header";
-import { createClient } from "@/lib/supabase/server";
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -76,14 +73,8 @@ export const metadata: Metadata = {
 };
 
 export default async function CookiePolicyPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header isLoggedIn={!!user} userEmail={user?.email} />
+    <div>
       
       {/* Structured Data for Cookie Policy */}
       <script
@@ -245,15 +236,20 @@ export default async function CookiePolicyPage() {
           })
         }}
       />
-
-      <main className="flex-1 py-16">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+        <div className='bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:48px_48px]  border-b border-gray-200/50 pt-20 dark:border-gray-800/50 dark:from-orange-950/20 dark:to-purple-950/20'>
+          <div className='container mx-auto px-6 py-16'>
+            <div className='mx-auto max-w-4xl space-y-4 text-center'>
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Cookie Policy
           </h1>
-          <p className="mt-4 text-muted-foreground">
-            Last updated: September 15, 2025
+              <p className="mt-4 text-muted-foreground">
+            Last updated: December 07, 2025
           </p>
+            </div>
+          </div>
+        </div>
+      <main className="flex-1 py-16">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 
           <div className="mt-8 space-y-8">{/* Content */}
             {/* Introduction */}
@@ -627,7 +623,6 @@ export default async function CookiePolicyPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

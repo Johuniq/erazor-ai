@@ -2,8 +2,6 @@
 
 import type React from "react"
 
-import { Footer } from "@/components/footer"
-import { Header } from "@/components/header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -65,15 +63,20 @@ export default function ContactPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <Header />
+               <div className='bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:48px_48px]  border-b border-gray-200/50 pt-20 dark:border-gray-800/50 dark:from-orange-950/20 dark:to-purple-950/20'>
+          <div className='container mx-auto px-6 py-16'>
+            <div className='mx-auto max-w-4xl space-y-4 text-center'>
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            Contact Us
+          </h1>
+              <p className="mt-4 text-muted-foreground">
+            Submit the form below or reach out via email. We're here to assist you!
+          </p>
+            </div>
+          </div>
+        </div>
       <main className="flex-1">
         <div className="mx-auto max-w-5xl px-4 py-16 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight">Contact Us</h1>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Have a question or feedback? We'd love to hear from you.
-            </p>
-          </div>
 
           <div className="mt-16 grid gap-8 lg:grid-cols-2">
             {/* Contact Info */}
@@ -225,7 +228,6 @@ export default function ContactPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   )
 }

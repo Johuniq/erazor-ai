@@ -1,4 +1,3 @@
-import { Header } from '@/components/header';
 import { createClient } from '@/lib/supabase/server';
 import { Metadata } from 'next';
 
@@ -81,7 +80,6 @@ export default async function TermsOfServicePage() {
   
   return (
     <div className='flex min-h-screen flex-col'>
-    <Header isLoggedIn={!!user} userEmail={user?.email} />
       
       {/* Structured Data for Terms of Service */}
       <script
@@ -235,22 +233,23 @@ export default async function TermsOfServicePage() {
       />
 
       <div className='bg-background min-h-screen'>
+        
         {/* Header */}
-        <div className='border-b border-gray-200/50 bg-gradient-to-br from-orange-50 to-purple-50 pt-20 dark:border-gray-800/50 dark:from-orange-950/20 dark:to-purple-950/20'>
+        <div className='bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:48px_48px]  border-b border-gray-200/50 pt-20 dark:border-gray-800/50 dark:from-orange-950/20 dark:to-purple-950/20'>
           <div className='container mx-auto px-6 py-16'>
             <div className='mx-auto max-w-4xl space-y-4 text-center'>
               <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Cookie Policy
+            Terms of Service
           </h1>
               <p className="mt-4 text-muted-foreground">
-            Last updated: September 15, 2025
+            Last updated: December 07, 2025
           </p>
             </div>
           </div>
         </div>
 
         {/* Content */}
-        <div className='container mx-auto bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:48px_48px] px-6 py-16'>
+        <div className='container mx-auto px-6 py-16'>
           <div className='mx-auto max-w-4xl'>
             <div className='prose prose-lg dark:prose-invert max-w-none'>
               {/* Agreement */}

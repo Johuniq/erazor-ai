@@ -1,5 +1,8 @@
 import { AuthProvider } from "@/components/auth-provider";
 import { CookieConsent } from "@/components/cookie-consent";
+import { Footer } from "@/components/footer";
+import { Header } from "@/components/header";
+import { ProductHuntBanner } from "@/components/landing/product-hunt-banner";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
@@ -252,7 +255,11 @@ export default function RootLayout({
       </head>
       <body className={`${space.variable} font-sans antialiased`}>
         <AuthProvider>
+                <ProductHuntBanner />
+
+          <Header />
           {children}
+          <Footer />
         </AuthProvider>
         <Toaster position="top-center" richColors />
         <CookieConsent />
