@@ -3,14 +3,14 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { CDN_URL } from "@/constants/data"
-import { ArrowRight, CheckCircle2, ImageMinus, Maximize2, Sparkles } from "lucide-react"
+import { CheckCircle2, ImageMinus, Maximize2, Sparkles } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 
 export function HeroSection() {
 
   return (
-    <section className="relative overflow-hidden pt-12 pb-20 sm:pt-20 sm:pb-28">
+    <section className="relative overflow-hidden pt-20 pb-20 sm:pt-28 sm:pb-28">
       {/* Animated background gradient */}
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,oklch(0.95_0.005_265)_1px,transparent_1px),linear-gradient(to_bottom,oklch(0.95_0.005_265)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)]" />
@@ -21,14 +21,9 @@ export function HeroSection() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">
           {/* ProductHunt Badge */}
-          <Badge
-            variant="secondary"
-            className="mb-6 gap-2 px-4 py-2 text-sm font-medium animate-in fade-in slide-in-from-bottom-4 duration-700"
-          >
-            <Sparkles className="h-4 w-4 text-primary" />
-            Launching on Product Hunt
-            <ArrowRight className="h-3 w-3" />
-          </Badge>
+          <div className="w-full flex items-center justify-center mb-2">
+            <a href="https://fazier.com/launches/www.erazor.app" target="_blank"><img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=featured&theme=dark" width={200} height={50} alt="Fazier badge" /></a>
+          </div>
 
           <h1 className="text-balance text-4xl font-extrabold tracking-tight sm:text-5xl lg:text-6xl xl:text-7xl animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
             Remove backgrounds &

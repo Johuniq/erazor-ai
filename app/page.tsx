@@ -2,6 +2,7 @@ import { ComparisonSection } from "@/components/landing/comparison-section"
 import { CTASection } from "@/components/landing/cta-section"
 import { FAQSection } from "@/components/landing/faq-section"
 import FeaturesSection from "@/components/landing/features-section"
+import { FloatingPromoCard } from "@/components/landing/floating-card"
 import { HeroSection } from "@/components/landing/hero-section"
 import { HowItWorksSection } from "@/components/landing/how-it-works-section"
 import { LogosSection } from "@/components/landing/logos-section"
@@ -32,6 +33,18 @@ export default async function HomePage() {
         <FAQSection />
         <CTASection />
       </main>
+      
+      <FloatingPromoCard
+        title="BLACK FRIDAY SALE"
+        description="All Plans"
+        discount="50% OFF"
+        code="BF50"
+        ctaText="Claim Deal Now"
+        ctaHref="#pricing"
+        position="bottom-right"
+        autoShow={true}
+        delay={3000}
+      />
     </>
   )
 }

@@ -31,7 +31,7 @@ export function Banner() {
       }`}
     >
       {/* Animated background */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#da552f] via-[#ea7e38] to-[#da552f] bg-[length:200%_100%] animate-[shimmer_3s_ease-in-out_infinite] pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black via-gray-900 to-black bg-[length:200%_100%] animate-[shimmer_3s_ease-in-out_infinite] pointer-events-none" />
       
       {/* Subtle pattern overlay */}
       <div className="absolute inset-0 opacity-10 pointer-events-none" style={{
@@ -39,47 +39,34 @@ export function Banner() {
       }} />
 
       <div className="relative z-10 mx-auto flex max-w-7xl items-center justify-center gap-3 px-4 py-3 text-sm sm:gap-4 sm:px-6">
-        {/* Animated sparkle icon */}        
         <div className="flex items-center gap-2 sm:gap-3">
-          <span className="hidden sm:inline text-white/90 font-medium">🚀 We're live on</span>
-          <span className="inline sm:hidden text-white/90 font-medium">🚀 Live on</span>
+          <span className="hidden sm:inline text-white/90 font-semibold">🔥 BLACK FRIDAY:</span>
+          <span className="inline sm:hidden text-white/90 font-semibold">🔥 BLACK FRIDAY</span>
           
-          <Link
-            href="https://www.producthunt.com/products/erazor"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 font-semibold text-white transition-all duration-200 hover:bg-white/25 hover:scale-105 hover:shadow-lg"
-          >
-            <svg className="h-5 w-5 transition-transform group-hover:rotate-12" viewBox="0 0 40 40" fill="currentColor">
-              <path d="M20 40C31.0457 40 40 31.0457 40 20C40 8.9543 31.0457 0 20 0C8.9543 0 0 8.9543 0 20C0 31.0457 8.9543 40 20 40Z" />
-              <path
-                d="M22.5 20H17V14H22.5C24.1569 14 25.5 15.3431 25.5 17C25.5 18.6569 24.1569 20 22.5 20Z"
-                fill="#da552f"
-              />
-              <path d="M17 14V26H14V14H17Z" fill="#da552f" />
-              <path
-                d="M22.5 14H17V20H22.5C24.1569 20 25.5 18.6569 25.5 17C25.5 15.3431 24.1569 14 22.5 14Z"
-                fill="#da552f"
-              />
-            </svg>
-            <span>Product Hunt</span>
-            <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-          </Link>
+          <div className="inline-flex items-center gap-2 rounded-full bg-white/15 backdrop-blur-sm px-3 py-1.5 font-bold text-white">
+            <span className="text-yellow-300">50% OFF</span>
+            <span className="hidden sm:inline">All Plans</span>
+          </div>
         </div>
 
         <span className="hidden md:inline text-white/90">—</span>
         
+        <div className="hidden md:flex items-center gap-2 text-white">
+          <span className="font-medium">Use code:</span>
+          <code className="rounded bg-white/20 px-2 py-1 font-mono text-sm font-bold tracking-wider text-yellow-300">
+            BF50
+          </code>
+        </div>
+        
         <Link
-          href="https://www.producthunt.com/products/erazor"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="hidden md:inline-flex items-center gap-1.5 text-white font-medium hover:text-yellow-200 transition-colors"
+          href="#pricing"
+          className="hidden md:inline-flex items-center gap-1.5 text-white font-semibold hover:text-yellow-300 transition-colors"
         >
-          Support us with an upvote! 
-          <span className="text-lg inline-block">👆</span>
+          Claim Deal
+          <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </Link>
         
-        <span className="inline md:hidden text-white/90 font-medium">Upvote us! 👆</span>
+        <span className="inline md:hidden text-white/90 font-medium">Code: <span className="font-bold text-yellow-300">BF50</span></span>
       </div>
 
       <button
