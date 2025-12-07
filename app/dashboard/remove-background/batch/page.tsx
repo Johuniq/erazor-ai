@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { useUserStore } from "@/lib/store/user-store"
-import { createClient } from "@/lib/supabase/client"
 import { getFileSizeLimit } from "@/lib/utils"
 import { ArrowLeft, Download, ImageMinus, Lightbulb, Lock, Sparkles, Zap } from "lucide-react"
 import Image from "next/image"
@@ -27,36 +26,36 @@ interface BatchResult {
 export default function BatchBackgroundRemovalPage() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [results, setResults] = useState<BatchResult[]>([])
-  const [userPlan, setUserPlan] = useState<string>("free")
-  const { deductCredits } = useUserStore()
+  const { profile, fetchProfile, deductCredits } = useUserStore()
   const router = useRouter()
 
+  // Fetch profile if not loaded
   useEffect(() => {
-    async function checkPlanAccess() {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("plan")
-          .eq("id", user.id)
-          .single()
-        
-        if (profile?.plan) {
-          setUserPlan(profile.plan)
-          // Redirect if not pro or enterprise
-          if (profile.plan === "free") {
-            toast.error("Batch processing requires Pro or Enterprise plan")
-            router.push("/dashboard/billing")
-          }
-        }
+    if (!profile) {
+      fetchProfile()
+    }
+  }, [profile, fetchProfile])
+
+  const userPlan = profile?.plan || "free"
+
+  // Check plan access
+  useEffect(() => {
+    if (profile) {
+      console.log('=== Batch BG Removal Debug ===')
+      console.log('Profile:', profile)
+      console.log('Plan:', profile.plan)
+      console.log('Plan lowercase:', profile.plan?.toLowerCase())
+      
+      const planLower = profile.plan?.toLowerCase() || "free"
+      if (planLower !== "pro" && planLower !== "enterprise") {
+        toast.error("Batch processing requires Pro or Enterprise plan")
+        router.push("/dashboard/billing")
       }
     }
-    checkPlanAccess()
-  }, [router])
+  }, [profile, router])
 
   const maxFileSize = getFileSizeLimit(userPlan)
-  const maxBatchSize = userPlan === "enterprise" ? 50 : 25
+  const maxBatchSize = userPlan.toLowerCase() === "enterprise" ? 50 : 25
 
   const handleBatchUpload = async (files: File[]) => {
     setIsProcessing(true)
@@ -136,7 +135,7 @@ export default function BatchBackgroundRemovalPage() {
     toast.success("Downloading all processed images")
   }
 
-  if (userPlan === "free") {
+  if (userPlan.toLowerCase() === "free") {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <Card className="max-w-md">
@@ -187,7 +186,7 @@ export default function BatchBackgroundRemovalPage() {
             <h1 className="text-3xl font-bold tracking-tight">Batch Background Removal</h1>
             <Badge variant="secondary" className="gap-1">
               <Sparkles className="h-3 w-3" />
-              {userPlan === "enterprise" ? "Enterprise" : "Pro"}
+              {userPlan.toLowerCase() === "enterprise" ? "Enterprise" : "Pro"}
             </Badge>
           </div>
           <p className="text-muted-foreground">
