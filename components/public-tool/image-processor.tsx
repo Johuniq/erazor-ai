@@ -228,7 +228,7 @@ export function ImageProcessor({ type, title, description, isAuthenticated = fal
             Sign up for more credits
           </Link>
         )}
-        {isAuthenticated && (
+        {isAuthenticated && credits !== null && credits < 50 && (
           <Link href="/dashboard/billing" className="text-xs sm:text-sm text-primary hover:underline">
             Get more credits
           </Link>
