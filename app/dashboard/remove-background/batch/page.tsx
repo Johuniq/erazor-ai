@@ -19,7 +19,7 @@ interface BatchResult {
   fileName: string
   status: "complete" | "error" | "processing"
   error?: string
-  blob?: Blob
+  resultUrl?: string
 }
 
 export default function BatchBackgroundRemovalPage() {
@@ -119,23 +119,11 @@ export default function BatchBackgroundRemovalPage() {
 
             const resultUrl = await pollResult(data.job_id)
             console.log(`Result URL for ${file.name}:`, resultUrl)
-            
-            // Fetch the processed image as blob
-            const imageResponse = await fetch(resultUrl)
-            if (!imageResponse.ok) {
-              console.error(`Failed to download ${file.name}:`, imageResponse.status, imageResponse.statusText)
-              throw new Error(`Failed to download processed image: ${imageResponse.status}`)
-            }
-            const blob = await imageResponse.blob()
-            console.log(`Downloaded blob for ${file.name}:`, blob.size, blob.type)
-
-            // Deduct credit
-            await deductCredits(1)
 
             return {
               fileName: file.name,
               status: "complete" as const,
-              blob
+              resultUrl
             }
           } catch (error) {
             console.error(`Error processing ${file.name}:`, error)
@@ -164,6 +152,12 @@ export default function BatchBackgroundRemovalPage() {
       }
 
       const successCount = results.filter(r => r.status === "complete").length
+      
+      // Deduct credits from store to update UI (API already deducted from DB)
+      if (successCount > 0) {
+        deductCredits(successCount)
+      }
+      
       toast.success(`Batch processing complete! ${successCount} images processed`)
     } catch (error) {
       console.error("Batch processing error:", error)
@@ -174,7 +168,7 @@ export default function BatchBackgroundRemovalPage() {
   }
 
   const downloadAll = async () => {
-    const completedResults = results.filter(r => r.status === "complete" && r.blob)
+    const completedResults = results.filter(r => r.status === "complete" && r.resultUrl)
     
     if (completedResults.length === 0) {
       toast.error("No processed images to download")
@@ -184,17 +178,25 @@ export default function BatchBackgroundRemovalPage() {
     try {
       const zip = new JSZip()
       
-      // Add each processed image to the ZIP
-      completedResults.forEach((result) => {
-        if (result.blob) {
-          const extension = result.fileName.split('.').pop()
-          const nameWithoutExt = result.fileName.replace(/\.[^/.]+$/, "")
-          zip.file(`${nameWithoutExt}_processed.${extension}`, result.blob)
+      toast.loading("Downloading and creating ZIP file...")
+      
+      // Download each processed image and add to ZIP
+      for (const result of completedResults) {
+        if (result.resultUrl) {
+          try {
+            const imageResponse = await fetch(result.resultUrl)
+            const blob = await imageResponse.blob()
+            
+            const extension = result.fileName.split('.').pop()
+            const nameWithoutExt = result.fileName.replace(/\.[^/.]+$/, "")
+            zip.file(`${nameWithoutExt}_processed.${extension}`, blob)
+          } catch (error) {
+            console.error(`Failed to download ${result.fileName}:`, error)
+          }
         }
-      })
+      }
 
       // Generate the ZIP file
-      toast.loading("Creating ZIP file...")
       const zipBlob = await zip.generateAsync({ type: "blob" })
       
       // Create download link
@@ -211,6 +213,7 @@ export default function BatchBackgroundRemovalPage() {
       toast.success(`Downloaded ${completedResults.length} images as ZIP`)
     } catch (error) {
       console.error("Error creating ZIP:", error)
+      toast.dismiss()
       toast.error("Failed to create ZIP file")
     }
   }
