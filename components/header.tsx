@@ -117,12 +117,11 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
-                  onClick={handleSignOut} 
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                  onSelect={(e) => {
-                    e.preventDefault()
-                    handleSignOut()
+                  onClick={async () => {
+                    await handleSignOut();
+                    window.location.reload();
                   }}
+                  className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign out
