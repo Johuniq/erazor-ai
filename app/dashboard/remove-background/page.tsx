@@ -2,11 +2,14 @@
 
 import { ImageUpload } from "@/components/dashboard/image-upload"
 import { ProcessingResult } from "@/components/dashboard/processing-result"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useUserStore } from "@/lib/store/user-store"
 import { createClient } from "@/lib/supabase/client"
 import { getFileSizeLimit } from "@/lib/utils"
-import { ImageIcon, ImageMinus, Lightbulb, Sparkles, Zap } from "lucide-react"
+import { ImageIcon, ImageMinus, Layers, Lightbulb, Sparkles, Zap } from "lucide-react"
+import Link from "next/link"
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
 
@@ -100,14 +103,26 @@ export default function BackgroundRemovalPage() {
     <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 space-y-6 sm:space-y-8">
       {/* Page header */}
       <div className="space-y-2">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
-            <ImageMinus className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-primary/10 shadow-sm">
+              <ImageMinus className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Background Removal</h1>
+              <p className="text-sm sm:text-base text-muted-foreground">Remove backgrounds from your images with AI precision</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Background Removal</h1>
-            <p className="text-sm sm:text-base text-muted-foreground">Remove backgrounds from your images with AI precision</p>
-          </div>
+          {(userPlan === "pro" || userPlan === "enterprise") && (
+            <Button asChild variant="outline" size="sm" className="gap-2 shrink-0">
+              <Link href="/dashboard/remove-background/batch">
+                <Layers className="h-4 w-4" />
+                <span className="hidden sm:inline">Batch Processing</span>
+                <span className="sm:hidden">Batch</span>
+                <Badge variant="secondary" className="ml-1">Pro</Badge>
+              </Link>
+            </Button>
+          )}
         </div>
       </div>
 

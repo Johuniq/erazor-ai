@@ -21,6 +21,7 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
 CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Service role can manage all profiles" ON profiles FOR ALL USING (auth.jwt()->>'role' = 'service_role');
 
 -- Image processing jobs table
 CREATE TABLE IF NOT EXISTS processing_jobs (
@@ -45,6 +46,7 @@ CREATE POLICY "Users can view own jobs" ON processing_jobs FOR SELECT USING (aut
 CREATE POLICY "Users can insert own jobs" ON processing_jobs FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own jobs" ON processing_jobs FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own jobs" ON processing_jobs FOR DELETE USING (auth.uid() = user_id);
+CREATE POLICY "Service role can manage all jobs" ON processing_jobs FOR ALL USING (auth.jwt()->>'role' = 'service_role');
 
 -- Credit transactions table for tracking
 CREATE TABLE IF NOT EXISTS credit_transactions (

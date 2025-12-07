@@ -1,6 +1,10 @@
 -- Atomic credit deduction function to prevent race conditions
 CREATE OR REPLACE FUNCTION deduct_credit(p_user_id UUID, p_amount INTEGER)
-RETURNS TABLE(credits INTEGER, success BOOLEAN) AS $$
+RETURNS TABLE(credits INTEGER, success BOOLEAN) 
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_credits INTEGER;
   v_success BOOLEAN;
@@ -31,11 +35,15 @@ BEGIN
     RETURN NEXT;
   END IF;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Atomic credit deduction for anonymous users
 CREATE OR REPLACE FUNCTION deduct_anon_credit(p_anon_user_id UUID, p_amount INTEGER)
-RETURNS TABLE(credits INTEGER, success BOOLEAN) AS $$
+RETURNS TABLE(credits INTEGER, success BOOLEAN)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 DECLARE
   v_credits INTEGER;
   v_success BOOLEAN;
@@ -66,4 +74,4 @@ BEGIN
     RETURN NEXT;
   END IF;
 END;
-$$ LANGUAGE plpgsql;
+$$;
