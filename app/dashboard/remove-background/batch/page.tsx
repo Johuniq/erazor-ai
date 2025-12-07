@@ -91,27 +91,43 @@ export default function BatchBackgroundRemovalPage() {
             
             // Poll for result
             const pollResult = async (jobId: string): Promise<string> => {
-              const statusResponse = await fetch(`/api/process/${jobId}?type=bg_removal`)
-              const statusData = await statusResponse.json()
+              try {
+                const statusResponse = await fetch(`/api/process/${jobId}?type=bg_removal`)
+                
+                if (!statusResponse.ok) {
+                  const errorText = await statusResponse.text()
+                  console.error(`Poll failed for ${file.name}:`, errorText)
+                  throw new Error(`Failed to check status: ${statusResponse.status}`)
+                }
+                
+                const statusData = await statusResponse.json()
+                console.log(`Status for ${file.name}:`, statusData)
 
-              if (statusData.status === "completed" && statusData.result_url) {
-                return statusData.result_url
-              } else if (statusData.status === "failed") {
-                throw new Error("Processing failed")
+                if (statusData.status === "completed" && statusData.result_url) {
+                  return statusData.result_url
+                } else if (statusData.status === "failed") {
+                  throw new Error("Processing failed")
+                }
+
+                await new Promise((resolve) => setTimeout(resolve, 2000))
+                return pollResult(jobId)
+              } catch (error) {
+                console.error(`Polling error for ${file.name}:`, error)
+                throw error
               }
-
-              await new Promise((resolve) => setTimeout(resolve, 2000))
-              return pollResult(jobId)
             }
 
             const resultUrl = await pollResult(data.job_id)
+            console.log(`Result URL for ${file.name}:`, resultUrl)
             
             // Fetch the processed image as blob
             const imageResponse = await fetch(resultUrl)
             if (!imageResponse.ok) {
-              throw new Error("Failed to download processed image")
+              console.error(`Failed to download ${file.name}:`, imageResponse.status, imageResponse.statusText)
+              throw new Error(`Failed to download processed image: ${imageResponse.status}`)
             }
             const blob = await imageResponse.blob()
+            console.log(`Downloaded blob for ${file.name}:`, blob.size, blob.type)
 
             // Deduct credit
             await deductCredits(1)
