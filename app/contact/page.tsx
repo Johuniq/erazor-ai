@@ -9,15 +9,58 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Building, Mail, MessageSquare } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { Building, Loader2, Mail, MessageSquare } from "lucide-react"
 import { useState } from "react"
 
 export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    setSubmitted(true)
+    setLoading(true)
+
+    const formData = new FormData(e.currentTarget)
+    const data = {
+      firstName: formData.get("firstName") as string,
+      lastName: formData.get("lastName") as string,
+      email: formData.get("email") as string,
+      subject: formData.get("subject") as string,
+      message: formData.get("message") as string,
+    }
+
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to send message")
+      }
+
+      setSubmitted(true)
+      toast({
+        title: "Message sent!",
+        description: "We'll get back to you within 24 hours.",
+      })
+    } catch (error) {
+      console.error("Contact form error:", error)
+      toast({
+        title: "Failed to send",
+        description: error instanceof Error ? error.message : "Please try again later.",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -113,27 +156,67 @@ export default function ContactPage() {
                     <div className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="firstName">First name</Label>
-                        <Input id="firstName" required />
+                        <Input 
+                          id="firstName" 
+                          name="firstName"
+                          required 
+                          disabled={loading || submitted}
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="lastName">Last name</Label>
-                        <Input id="lastName" required />
+                        <Input 
+                          id="lastName" 
+                          name="lastName"
+                          required 
+                          disabled={loading || submitted}
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" required />
+                      <Input 
+                        id="email" 
+                        name="email"
+                        type="email" 
+                        required 
+                        disabled={loading || submitted}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="subject">Subject</Label>
-                      <Input id="subject" required />
+                      <Input 
+                        id="subject" 
+                        name="subject"
+                        required 
+                        disabled={loading || submitted}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="message">Message</Label>
-                      <Textarea id="message" rows={5} required />
+                      <Textarea 
+                        id="message" 
+                        name="message"
+                        rows={5} 
+                        required 
+                        disabled={loading || submitted}
+                      />
                     </div>
-                    <Button type="submit" className="w-full">
-                      Send Message
+                    <Button 
+                      type="submit" 
+                      className="w-full"
+                      disabled={loading || submitted}
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : submitted ? (
+                        "Message Sent!"
+                      ) : (
+                        "Send Message"
+                      )}
                     </Button>
                   </form>
                 )}
