@@ -19,6 +19,7 @@ interface HeaderProps {
 export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [signingOut, setSigningOut] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
   const router = useRouter()
 
   const handleSignOut = async () => {
@@ -27,18 +28,23 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
     try {
       setSigningOut(true)
       const supabase = createClient()
-      await supabase.auth.signOut()
-      toast.success("Signed out successfully")
+      const { error } = await supabase.auth.signOut()
+      
+      if (error) {
+        throw error
+      }
 
-      // Close mobile menu if it's open
+      // Close mobile menu and dropdown if open
       setMobileMenuOpen(false)
+      setDropdownOpen(false)
 
-      router.push("/")
-      router.refresh()
+      toast.success("Signed out successfully")
+      
+      // Use window.location for a hard refresh to clear all state
+      window.location.href = "/"
     } catch (error) {
       console.error(error)
       toast.error("Failed to sign out")
-    } finally {
       setSigningOut(false)
     }
   }
@@ -87,7 +93,7 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
 
         <div className="hidden items-center gap-3 md:flex">
           {isLoggedIn ? (
-            <DropdownMenu>
+            <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="gap-2">
                   <Avatar className="h-7 w-7">
@@ -128,15 +134,15 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
+                  disabled={signingOut}
+                  className="cursor-pointer text-destructive focus:text-destructive"
                   onSelect={(e) => {
                     e.preventDefault()
                     handleSignOut()
                   }}
-                  disabled={signingOut}
-                  className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  Sign out
+                  {signingOut ? "Signing out..." : "Sign out"}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
