@@ -1,26 +1,16 @@
 "use client"
 
-import { ImageUpload } from "@/components/dashboard/image-upload"
-import { ProcessingResult } from "@/components/dashboard/processing-result"
+import { ImageProcessor } from "@/components/image-processing/image-processor"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { getDisplayReadyUrl, releaseObjectUrl } from "@/lib/display-ready-url"
 import { useUserStore } from "@/lib/store/user-store"
-import { getFileSizeLimit } from "@/lib/utils"
-import { Crown, ImageIcon, Layers, Lightbulb, Maximize2, Sparkles } from "lucide-react"
+import { Crown, ImageIcon, Layers, Lightbulb, Maximize2 } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useState } from "react"
-import { toast } from "sonner"
-
-type ProcessingState = "idle" | "uploading" | "processing" | "complete" | "error"
+import { useEffect } from "react"
 
 export default function UpscalePage() {
-  const [state, setState] = useState<ProcessingState>("idle")
-  const [originalUrl, setOriginalUrl] = useState<string>("")
-  const [resultUrl, setResultUrl] = useState<string>("")
-  const [resultDownloadUrl, setResultDownloadUrl] = useState<string>("")
-  const { profile, fetchProfile, deductCredits } = useUserStore()
+  const { profile, fetchProfile } = useUserStore()
 
   // Fetch profile if not loaded
   useEffect(() => {
@@ -29,88 +19,8 @@ export default function UpscalePage() {
     }
   }, [profile, fetchProfile])
 
-  // Debug logging
-  useEffect(() => {
-    console.log('=== Upscale Debug ===')
-    console.log('Profile:', profile)
-    console.log('Plan:', profile?.plan)
-    console.log('Plan lowercase:', profile?.plan?.toLowerCase())
-    console.log('Show batch button:', profile?.plan?.toLowerCase() === "pro" || profile?.plan?.toLowerCase() === "enterprise")
-  }, [profile])
-
-  useEffect(() => {
-    return () => {
-      releaseObjectUrl(originalUrl)
-      releaseObjectUrl(resultUrl)
-    }
-  }, [originalUrl, resultUrl])
-
   const userPlan = profile?.plan || "free"
-  const maxFileSize = getFileSizeLimit(userPlan)
-
-  const handleUpload = async (file: File) => {
-    setState("uploading")
-
-    try {
-      const formData = new FormData()
-      formData.append("image", file)
-      formData.append("type", "upscale")
-
-      const response = await fetch("/api/process", {
-        method: "POST",
-        body: formData,
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || "Processing failed")
-      }
-
-      setState("processing")
-
-      const data = await response.json()
-      releaseObjectUrl(originalUrl)
-      setOriginalUrl(URL.createObjectURL(file))
-
-      const pollResult = async (jobId: string): Promise<string> => {
-        const statusResponse = await fetch(`/api/process/${jobId}?type=upscale`)
-        const statusData = await statusResponse.json()
-
-        if (statusData.status === "completed" && statusData.result_url) {
-          return statusData.result_url
-        } else if (statusData.status === "failed") {
-          throw new Error("Processing failed")
-        }
-
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-        return pollResult(jobId)
-      }
-
-      const remoteResultUrl = await pollResult(data.job_id)
-      const displayUrl = await getDisplayReadyUrl(remoteResultUrl)
-      releaseObjectUrl(resultUrl)
-      setResultUrl(displayUrl)
-      setResultDownloadUrl(remoteResultUrl)
-      setState("complete")
-      
-      // Deduct credits from store
-      deductCredits(1)
-      
-      toast.success("Image upscaled successfully!")
-    } catch (error) {
-      setState("error")
-      toast.error(error instanceof Error ? error.message : "Processing failed")
-    }
-  }
-
-  const handleReset = () => {
-    setState("idle")
-    releaseObjectUrl(originalUrl)
-    releaseObjectUrl(resultUrl)
-    setOriginalUrl("")
-    setResultUrl("")
-    setResultDownloadUrl("")
-  }
+  const userCredits = profile?.credits || 0
 
   return (
     <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10 space-y-6 sm:space-y-8">
@@ -146,34 +56,13 @@ export default function UpscalePage() {
           <CardDescription className="text-xs sm:text-sm">Our AI will upscale your image up to 2x resolution</CardDescription>
         </CardHeader>
         <CardContent className="p-4 sm:p-6">
-          {state === "complete" ? (
-            <ProcessingResult
-              originalUrl={originalUrl}
-              resultUrl={resultUrl}
-              downloadUrl={resultDownloadUrl || undefined}
-              onReset={handleReset}
-            />
-          ) : (
-            <div className="space-y-3 sm:space-y-4">
-              <ImageUpload onUpload={handleUpload} isProcessing={state === "uploading" || state === "processing"} maxSize={maxFileSize} />
-              {(state === "uploading" || state === "processing") && (
-                <div className="flex items-center justify-center gap-2 sm:gap-3 rounded-xl bg-primary/5 border border-primary/20 p-4 sm:p-5">
-                  <div className="relative shrink-0">
-                    <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-full bg-primary/20">
-                      <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-primary animate-pulse" />
-                    </div>
-                    <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-ping" />
-                  </div>
-                  <div>
-                    <p className="text-sm sm:text-base font-medium">
-                      {state === "uploading" ? "Uploading your image..." : "AI is enhancing your image..."}
-                    </p>
-                    <p className="text-xs sm:text-sm text-muted-foreground">This usually takes 10-20 seconds</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          <ImageProcessor
+            type="upscale"
+            title="Image Upscaling"
+            description="Enhance your images to higher resolution with AI"
+            isAuthenticated={true}
+            userCredits={userCredits}
+          />
         </CardContent>
       </Card>
 

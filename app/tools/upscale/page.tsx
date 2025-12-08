@@ -1,4 +1,4 @@
-import { ImageProcessor } from "@/components/public-tool/image-processor";
+import { ImageProcessor } from "@/components/image-processing/image-processor";
 import { createClient } from "@/lib/supabase/server";
 import { CheckCircle2, Maximize2 } from "lucide-react";
 import type { Metadata } from "next";
