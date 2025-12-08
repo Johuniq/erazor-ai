@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { getDisplayReadyUrl, releaseObjectUrl } from "@/lib/display-ready-url"
 import { generateFingerprint } from "@/lib/fingerprint"
 import { AlertCircle, ArrowRight, CheckCircle2, Download, ImageIcon, Loader2, Sparkles, Upload, X } from "lucide-react"
 import Link from "next/link"
@@ -24,10 +25,13 @@ export function ImageProcessor({ type, title, description, isAuthenticated = fal
   const [processing, setProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
   const [result, setResult] = useState<string | null>(null)
+  const [resultDownloadUrl, setResultDownloadUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [credits, setCredits] = useState<number | null>(isAuthenticated && userCredits !== undefined ? userCredits : null)
   const [requiresSignup, setRequiresSignup] = useState(false)
   const [fingerprint, setFingerprint] = useState<string | null>(null)
+
+  const isLocalUrl = (url: string) => url.startsWith("blob:") || url.startsWith("data:")
 
   // Generate fingerprint on mount (only for anonymous users)
   useEffect(() => {
@@ -73,12 +77,22 @@ export function ImageProcessor({ type, title, description, isAuthenticated = fal
     const file = acceptedFiles[0]
     if (file) {
       setFile(file)
+      if (preview) releaseObjectUrl(preview)
       setPreview(URL.createObjectURL(file))
+      if (result) releaseObjectUrl(result)
       setResult(null)
+      setResultDownloadUrl(null)
       setError(null)
       setRequiresSignup(false)
     }
-  }, [])
+  }, [preview, result])
+
+  useEffect(() => {
+    return () => {
+      releaseObjectUrl(preview)
+      releaseObjectUrl(result)
+    }
+  }, [preview, result])
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -162,7 +176,16 @@ export function ImageProcessor({ type, title, description, isAuthenticated = fal
         const statusData = await statusRes.json()
 
         if (statusData.status === "completed" && statusData.result_url) {
-          setResult(statusData.result_url)
+          const remoteResultUrl = statusData.result_url
+          setProgress(95)
+          const displayUrl = await getDisplayReadyUrl(remoteResultUrl)
+          setResult((current) => {
+            if (current) {
+              releaseObjectUrl(current)
+            }
+            return displayUrl
+          })
+          setResultDownloadUrl(remoteResultUrl)
           setProgress(100)
           break
         } else if (statusData.status === "failed") {
@@ -184,18 +207,40 @@ export function ImageProcessor({ type, title, description, isAuthenticated = fal
 
   const reset = () => {
     setFile(null)
+    if (preview) releaseObjectUrl(preview)
     setPreview(null)
-    setResult(null)
+    setResult((current) => {
+      if (current) {
+        releaseObjectUrl(current)
+      }
+      return null
+    })
+    setResultDownloadUrl(null)
     setError(null)
     setProgress(0)
     setRequiresSignup(false)
   }
 
   const downloadResult = async () => {
-    if (!result) return
+    const targetUrl = resultDownloadUrl || result
+    if (!targetUrl) return
+
+    const directDownload = () => {
+      const a = document.createElement("a")
+      a.href = targetUrl
+      a.download = `erazor-${type}-${Date.now()}.png`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+    }
 
     try {
-      const response = await fetch(result, {
+      if (isLocalUrl(targetUrl)) {
+        directDownload()
+        return
+      }
+
+      const response = await fetch(targetUrl, {
         mode: 'cors',
         credentials: 'omit'
       })
@@ -212,7 +257,7 @@ export function ImageProcessor({ type, title, description, isAuthenticated = fal
     } catch (error) {
       console.error('Download error:', error)
       // Fallback: open in new tab
-      window.open(result, "_blank")
+      window.open(targetUrl, "_blank")
     }
   }
 

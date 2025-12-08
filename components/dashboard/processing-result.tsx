@@ -2,23 +2,45 @@
 
 import { Button } from "@/components/ui/button"
 import { Check, Download, RefreshCw, Sparkles } from "lucide-react"
-import Image from "next/image"
 import { useState } from "react"
 import { toast } from "sonner"
 
 interface ProcessingResultProps {
   originalUrl: string
   resultUrl: string
+  downloadUrl?: string
   onReset: () => void
 }
 
-export function ProcessingResult({ originalUrl, resultUrl, onReset }: ProcessingResultProps) {
+const isLocalUrl = (url: string) => url.startsWith("blob:") || url.startsWith("data:")
+
+export function ProcessingResult({ originalUrl, resultUrl, downloadUrl, onReset }: ProcessingResultProps) {
   const [isDownloading, setIsDownloading] = useState(false)
 
   const handleDownload = async () => {
+    const targetUrl = downloadUrl || resultUrl
+    if (!targetUrl) return
+
+    const triggerDirectDownload = () => {
+      const link = document.createElement("a")
+      link.href = targetUrl
+      link.download = `erazor-processed-${Date.now()}.png`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      toast.success("Image downloaded successfully")
+    }
+
     setIsDownloading(true)
+
+    if (isLocalUrl(targetUrl)) {
+      triggerDirectDownload()
+      setIsDownloading(false)
+      return
+    }
+
     try {
-      const response = await fetch(resultUrl, {
+      const response = await fetch(targetUrl, {
         mode: 'cors',
         credentials: 'omit'
       })
@@ -36,7 +58,7 @@ export function ProcessingResult({ originalUrl, resultUrl, onReset }: Processing
     } catch (error) {
       console.error('Download error:', error)
       // Fallback: open in new tab
-      window.open(resultUrl, '_blank')
+      window.open(targetUrl, '_blank')
       toast.error("Opened in new tab - right-click to save")
     } finally {
       setIsDownloading(false)
@@ -63,7 +85,12 @@ export function ProcessingResult({ originalUrl, resultUrl, onReset }: Processing
             <span className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">Original</span>
           </div>
           <div className="relative aspect-square overflow-hidden rounded-2xl border border-border bg-muted/30 shadow-sm">
-            <Image src={originalUrl || "/placeholder.svg"} alt="Original image" fill className="object-contain p-2" />
+            <img
+              src={originalUrl || "/placeholder.svg"}
+              alt="Original image"
+              className="h-full w-full object-contain p-2"
+              loading="lazy"
+            />
           </div>
         </div>
 
@@ -78,7 +105,12 @@ export function ProcessingResult({ originalUrl, resultUrl, onReset }: Processing
             <Sparkles className="h-3.5 w-3.5 text-accent" />
           </div>
           <div className="relative aspect-square overflow-hidden rounded-2xl border-2 border-accent/30 shadow-lg shadow-accent/5 bg-[repeating-conic-gradient(hsl(var(--muted))_0%_25%,hsl(var(--background))_0%_50%)] bg-[length:20px_20px]">
-            <Image src={resultUrl || "/placeholder.svg"} alt="Processed image" fill className="object-contain p-2" />
+            <img
+              src={resultUrl || "/placeholder.svg"}
+              alt="Processed image"
+              className="h-full w-full object-contain p-2"
+              loading="lazy"
+            />
             {/* Subtle glow effect */}
             <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-accent/10" />
           </div>

@@ -5,6 +5,7 @@ import { ProcessingResult } from "@/components/dashboard/processing-result"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { getDisplayReadyUrl, releaseObjectUrl } from "@/lib/display-ready-url"
 import { useUserStore } from "@/lib/store/user-store"
 import { getFileSizeLimit } from "@/lib/utils"
 import { Crown, ImageIcon, Layers, Lightbulb, Maximize2, Sparkles } from "lucide-react"
@@ -18,6 +19,7 @@ export default function UpscalePage() {
   const [state, setState] = useState<ProcessingState>("idle")
   const [originalUrl, setOriginalUrl] = useState<string>("")
   const [resultUrl, setResultUrl] = useState<string>("")
+  const [resultDownloadUrl, setResultDownloadUrl] = useState<string>("")
   const { profile, fetchProfile, deductCredits } = useUserStore()
 
   // Fetch profile if not loaded
@@ -35,6 +37,13 @@ export default function UpscalePage() {
     console.log('Plan lowercase:', profile?.plan?.toLowerCase())
     console.log('Show batch button:', profile?.plan?.toLowerCase() === "pro" || profile?.plan?.toLowerCase() === "enterprise")
   }, [profile])
+
+  useEffect(() => {
+    return () => {
+      releaseObjectUrl(originalUrl)
+      releaseObjectUrl(resultUrl)
+    }
+  }, [originalUrl, resultUrl])
 
   const userPlan = profile?.plan || "free"
   const maxFileSize = getFileSizeLimit(userPlan)
@@ -60,6 +69,7 @@ export default function UpscalePage() {
       setState("processing")
 
       const data = await response.json()
+      releaseObjectUrl(originalUrl)
       setOriginalUrl(URL.createObjectURL(file))
 
       const pollResult = async (jobId: string): Promise<string> => {
@@ -76,8 +86,11 @@ export default function UpscalePage() {
         return pollResult(jobId)
       }
 
-      const result = await pollResult(data.job_id)
-      setResultUrl(result)
+      const remoteResultUrl = await pollResult(data.job_id)
+      const displayUrl = await getDisplayReadyUrl(remoteResultUrl)
+      releaseObjectUrl(resultUrl)
+      setResultUrl(displayUrl)
+      setResultDownloadUrl(remoteResultUrl)
       setState("complete")
       
       // Deduct credits from store
@@ -92,8 +105,11 @@ export default function UpscalePage() {
 
   const handleReset = () => {
     setState("idle")
+    releaseObjectUrl(originalUrl)
+    releaseObjectUrl(resultUrl)
     setOriginalUrl("")
     setResultUrl("")
+    setResultDownloadUrl("")
   }
 
   return (
@@ -131,7 +147,12 @@ export default function UpscalePage() {
         </CardHeader>
         <CardContent className="p-4 sm:p-6">
           {state === "complete" ? (
-            <ProcessingResult originalUrl={originalUrl} resultUrl={resultUrl} onReset={handleReset} />
+            <ProcessingResult
+              originalUrl={originalUrl}
+              resultUrl={resultUrl}
+              downloadUrl={resultDownloadUrl || undefined}
+              onReset={handleReset}
+            />
           ) : (
             <div className="space-y-3 sm:space-y-4">
               <ImageUpload onUpload={handleUpload} isProcessing={state === "uploading" || state === "processing"} maxSize={maxFileSize} />
