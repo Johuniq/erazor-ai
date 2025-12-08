@@ -269,24 +269,21 @@ export function ImageProcessor({ type, title, description, isAuthenticated = fal
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Credits Badge */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
-        <Badge variant={credits === 0 ? "destructive" : "secondary"} className="text-xs sm:text-sm">
-          {credits !== null ? `${credits} credits remaining` : "Loading..."}
-        </Badge>
-        {credits !== null && credits < 3 && !isAuthenticated && (
-          <Link href="/signup" className="text-xs sm:text-sm text-primary hover:underline">
-            Sign up for more credits
-          </Link>
-        )}
-        {isAuthenticated && credits !== null && credits < 50 && (
-          <Link href="/dashboard/billing" className="text-xs sm:text-sm text-primary hover:underline">
-            Get more credits
-          </Link>
-        )}
-      </div>
+      {/* Credits Badge - Only show for anonymous users */}
+      {!isAuthenticated && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
+          <Badge variant={credits === 0 ? "destructive" : "secondary"} className="text-xs sm:text-sm">
+            {credits !== null ? `${credits} credits remaining` : "Loading..."}
+          </Badge>
+          {credits !== null && credits < 3 && (
+            <Link href="/signup" className="text-xs sm:text-sm text-primary hover:underline">
+              Sign up for more credits
+            </Link>
+          )}
+        </div>
+      )}
 
-      {/* Upload Area */}
+      {/* Upload Area - Only show when no preview */}
       {!preview && (
         <Card
           {...getRootProps()}
@@ -307,26 +304,80 @@ export function ImageProcessor({ type, title, description, isAuthenticated = fal
         </Card>
       )}
 
-      {/* Preview & Processing */}
-      {preview && !result && (
+      {/* Split View - Show when preview is available */}
+      {preview && (
         <Card className="overflow-hidden">
-          <div className="relative aspect-video bg-muted">
-            <img src={preview || "/placeholder.svg"} alt="Image preview before processing" className="h-full w-full object-contain" />
-            <Button variant="secondary" size="icon" className="absolute right-2 top-2 sm:right-4 sm:top-4 h-8 w-8 sm:h-10 sm:w-10" onClick={reset}>
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-          <div className="border-t border-border p-3 sm:p-4">
-            {processing ? (
-              <div className="space-y-2 sm:space-y-3">
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                  <span className="text-xs sm:text-sm font-medium">Processing your image...</span>
-                </div>
-                <Progress value={progress} className="h-2" />
+          {/* Success banner - only show when result is ready */}
+          {result && (
+            <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-3 sm:p-4">
+              <div className="flex items-center gap-2 text-primary">
+                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="text-sm sm:text-base font-medium">Processing complete!</span>
               </div>
-            ) : error ? (
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+            </div>
+          )}
+
+          {/* Split view grid */}
+          <div className="grid gap-3 sm:gap-4 p-3 sm:p-4 md:grid-cols-2">
+            {/* Original Image */}
+            <div className="space-y-1.5 sm:space-y-2">
+              <p className="text-xs sm:text-sm font-medium text-muted-foreground">Original</p>
+              <div className="aspect-square overflow-hidden rounded-lg border border-border bg-muted relative">
+                <img src={preview || "/placeholder.svg"} alt="Original image" className="h-full w-full object-contain" />
+                {!processing && !result && (
+                  <Button 
+                    variant="secondary" 
+                    size="icon" 
+                    className="absolute right-2 top-2 h-8 w-8 rounded-full shadow-md" 
+                    onClick={reset}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Result/Processing Area */}
+            <div className="space-y-1.5 sm:space-y-2">
+              <div className="flex items-center gap-2">
+                <p className="text-xs sm:text-sm font-medium text-primary">
+                  {result ? "Processed" : processing ? "Processing..." : "Preview"}
+                </p>
+                {processing && <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />}
+              </div>
+              <div className="aspect-square overflow-hidden rounded-lg border-2 border-primary/20 bg-[repeating-conic-gradient(oklch(0.96_0.005_265)_0%_25%,transparent_0%_50%)] bg-[length:16px_16px] relative">
+                {result ? (
+                  <img src={result || "/placeholder.svg"} alt="Processed image" className="h-full w-full object-contain" />
+                ) : processing ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
+                    <div className="relative">
+                      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/20">
+                        <Sparkles className="h-8 w-8 text-primary animate-pulse" />
+                      </div>
+                      <div className="absolute inset-0 rounded-full border-2 border-primary/30 animate-ping" />
+                    </div>
+                    <div className="text-center px-4">
+                      <p className="text-sm font-medium text-primary">AI is working its magic</p>
+                      <p className="text-xs text-muted-foreground mt-1">This usually takes 5-15 seconds</p>
+                      <Progress value={progress} className="h-2 mt-3 max-w-[200px] mx-auto" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center text-muted-foreground">
+                      <ImageIcon className="h-12 w-12 mx-auto mb-2 opacity-20" />
+                      <p className="text-xs">Result will appear here</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="border-t border-border p-3 sm:p-4">
+            {error ? (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2 text-destructive">
                   <AlertCircle className="h-4 w-4 shrink-0" />
                   <span className="text-xs sm:text-sm">{error}</span>
@@ -342,8 +393,18 @@ export function ImageProcessor({ type, title, description, isAuthenticated = fal
                   <Button onClick={processImage} size="sm" className="w-full sm:w-auto">Try Again</Button>
                 )}
               </div>
-            ) : (
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
+            ) : result ? (
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <Button onClick={downloadResult} className="gap-2 flex-1" size="sm">
+                  <Download className="h-4 w-4" />
+                  Download Result
+                </Button>
+                <Button variant="outline" onClick={reset} size="sm" className="flex-1">
+                  Process Another
+                </Button>
+              </div>
+            ) : !processing ? (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                   <ImageIcon className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground shrink-0" />
                   <div className="min-w-0">
@@ -356,44 +417,7 @@ export function ImageProcessor({ type, title, description, isAuthenticated = fal
                   {type === "bg_removal" ? "Remove Background" : "Upscale Image"}
                 </Button>
               </div>
-            )}
-          </div>
-        </Card>
-      )}
-
-      {/* Result */}
-      {result && (
-        <Card className="overflow-hidden">
-          <div className="bg-gradient-to-r from-primary/10 to-accent/10 p-3 sm:p-4">
-            <div className="flex items-center gap-2 text-primary">
-              <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="text-sm sm:text-base font-medium">Processing complete!</span>
-            </div>
-          </div>
-          <div className="grid gap-3 sm:gap-4 p-3 sm:p-4 md:grid-cols-2">
-            {/* Before */}
-            <div className="space-y-1.5 sm:space-y-2">
-              <p className="text-xs sm:text-sm font-medium text-muted-foreground">Original</p>
-              <div className="aspect-square overflow-hidden rounded-lg border border-border bg-muted">
-                <img src={preview! || "/placeholder.svg"} alt="Original image before AI processing" className="h-full w-full object-contain" />
-              </div>
-            </div>
-            {/* After */}
-            <div className="space-y-1.5 sm:space-y-2">
-              <p className="text-xs sm:text-sm font-medium text-primary">Processed</p>
-              <div className="aspect-square overflow-hidden rounded-lg border-2 border-primary/20 bg-[repeating-conic-gradient(oklch(0.96_0.005_265)_0%_25%,transparent_0%_50%)] bg-[length:16px_16px]">
-                <img src={result || "/placeholder.svg"} alt="AI processed result image" className="h-full w-full object-contain" />
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 border-t border-border p-3 sm:p-4">
-            <Button onClick={downloadResult} className="gap-2 flex-1" size="sm">
-              <Download className="h-4 w-4" />
-              Download Result
-            </Button>
-            <Button variant="outline" onClick={reset} size="sm" className="flex-1">
-              Process Another
-            </Button>
+            ) : null}
           </div>
         </Card>
       )}
