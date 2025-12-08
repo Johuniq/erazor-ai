@@ -14,6 +14,9 @@ importers:
       '@marsidev/react-turnstile':
         specifier: ^1.3.1
         version: 1.3.1(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      '@paper-design/shaders-react':
+        specifier: ^0.0.68
+        version: 0.0.68(@types/react@19.2.7)(react@19.2.0)
       '@polar-sh/nextjs':
         specifier: latest
         version: 0.9.0(next@16.0.7(react-dom@19.2.0(react@19.2.0))(react@19.2.0))
@@ -471,6 +474,18 @@ packages:
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
+
+  '@paper-design/shaders-react@0.0.68':
+    resolution: {integrity: sha512-RaL/OCfaPVyVcPHJnemRuobfgseq1Pb5d4ktjclCmKprUe5Ac5WsexFuJBHpIfrMdYC/bV2ADJj24+dnthTpig==}
+    peerDependencies:
+      '@types/react': ^18 || ^19
+      react: ^18 || ^19
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+
+  '@paper-design/shaders@0.0.68':
+    resolution: {integrity: sha512-HWDb/mYfIDcwRGYjwTFEoupw4PgdmuoNONJ6TIXBaXWj3zdhS38iNehbAWQxWa1NHtOanOeQkbdG0wvaNKhvEw==}
 
   '@polar-sh/adapter-utils@0.4.0':
     resolution: {integrity: sha512-HfiJgAfCfE7qs9L8o3KgDzToUz3Z0sfvoX6ZnyMnfldX8ERnYxwQN79OsQq+dGKoak7+VhhJQvf348qop+5OKQ==}
@@ -2203,6 +2218,15 @@ snapshots:
 
   '@next/swc-win32-x64-msvc@16.0.7':
     optional: true
+
+  '@paper-design/shaders-react@0.0.68(@types/react@19.2.7)(react@19.2.0)':
+    dependencies:
+      '@paper-design/shaders': 0.0.68
+      react: 19.2.0
+    optionalDependencies:
+      '@types/react': 19.2.7
+
+  '@paper-design/shaders@0.0.68': {}
 
   '@polar-sh/adapter-utils@0.4.0':
     dependencies:

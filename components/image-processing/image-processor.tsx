@@ -1,5 +1,6 @@
 "use client"
 
+import { AddBackground } from "@/components/image-processing/add-background"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -7,7 +8,7 @@ import { Progress } from "@/components/ui/progress"
 import { getDisplayReadyUrl, releaseObjectUrl } from "@/lib/display-ready-url"
 import { generateFingerprint } from "@/lib/fingerprint"
 import { useUserStore } from "@/lib/store/user-store"
-import { AlertCircle, ArrowRight, CheckCircle2, Download, ImageIcon, Loader2, Sparkles, Upload, X } from "lucide-react"
+import { AlertCircle, ArrowRight, CheckCircle2, Download, ImageIcon, Loader2, Palette, Sparkles, Upload, X } from "lucide-react"
 import Link from "next/link"
 import { useCallback, useEffect, useState } from "react"
 import { useDropzone } from "react-dropzone"
@@ -31,6 +32,7 @@ export function ImageProcessor({ type, title, description, isAuthenticated = fal
   const [credits, setCredits] = useState<number | null>(isAuthenticated && userCredits !== undefined ? userCredits : null)
   const [requiresSignup, setRequiresSignup] = useState(false)
   const [fingerprint, setFingerprint] = useState<string | null>(null)
+  const [showAddBackground, setShowAddBackground] = useState(false)
   
   // Get user store for authenticated users to sync credits
   const { deductCredits } = useUserStore()
@@ -394,14 +396,28 @@ export function ImageProcessor({ type, title, description, isAuthenticated = fal
                 )}
               </div>
             ) : result ? (
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <Button onClick={downloadResult} className="gap-2 flex-1" size="sm">
-                  <Download className="h-4 w-4" />
-                  Download Result
-                </Button>
-                <Button variant="outline" onClick={reset} size="sm" className="flex-1">
-                  Process Another
-                </Button>
+              <div className="space-y-3">
+                {/* Show Add Background button only for bg_removal type */}
+                {type === "bg_removal" && (
+                  <Button 
+                    onClick={() => setShowAddBackground(true)} 
+                    variant="secondary" 
+                    className="w-full gap-2" 
+                    size="sm"
+                  >
+                    <Palette className="h-4 w-4" />
+                    Add Background
+                  </Button>
+                )}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                  <Button onClick={downloadResult} className="gap-2 flex-1" size="sm">
+                    <Download className="h-4 w-4" />
+                    Download Result
+                  </Button>
+                  <Button variant="outline" onClick={reset} size="sm" className="flex-1">
+                    Process Another
+                  </Button>
+                </div>
               </div>
             ) : !processing ? (
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
@@ -420,6 +436,14 @@ export function ImageProcessor({ type, title, description, isAuthenticated = fal
             ) : null}
           </div>
         </Card>
+      )}
+
+      {/* Add Background Modal */}
+      {showAddBackground && result && (
+        <AddBackground 
+          transparentImage={result} 
+          onClose={() => setShowAddBackground(false)} 
+        />
       )}
     </div>
   )
