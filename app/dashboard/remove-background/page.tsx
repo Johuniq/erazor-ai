@@ -62,6 +62,7 @@ export default function BackgroundRemovalPage() {
             description="Remove backgrounds from your images with AI precision"
             isAuthenticated={true}
             userCredits={userCredits}
+            userPlan={userPlan}
           />
         </CardContent>
       </Card>

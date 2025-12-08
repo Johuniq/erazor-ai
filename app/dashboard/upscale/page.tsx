@@ -62,6 +62,7 @@ export default function UpscalePage() {
             description="Enhance your images to higher resolution with AI"
             isAuthenticated={true}
             userCredits={userCredits}
+            userPlan={userPlan}
           />
         </CardContent>
       </Card>

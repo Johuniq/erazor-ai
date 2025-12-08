@@ -23,6 +23,7 @@ import { toast } from "sonner"
 interface AddBackgroundProps {
   transparentImage: string
   onClose: () => void
+  userPlan?: string
 }
 
 const gradientPresets = [
@@ -106,11 +107,12 @@ const gradientPresets = [
   },
 ]
 
-export function AddBackground({ transparentImage, onClose }: AddBackgroundProps) {
+export function AddBackground({ transparentImage, onClose, userPlan = "free" }: AddBackgroundProps) {
   const [selectedGradient, setSelectedGradient] = useState(gradientPresets[0])
   const [customBackground, setCustomBackground] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<"gradient" | "custom">("gradient")
   const [isCompositing, setIsCompositing] = useState(false)
+  const [downloadScale, setDownloadScale] = useState<number>(1)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -152,8 +154,13 @@ export function AddBackground({ transparentImage, onClose }: AddBackgroundProps)
         foregroundImg.src = transparentImage
       })
 
-      canvas.width = foregroundImg.width
-      canvas.height = foregroundImg.height
+      // Apply scale
+      canvas.width = foregroundImg.width * downloadScale
+      canvas.height = foregroundImg.height * downloadScale
+
+      // Use better image smoothing for upscaling
+      ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = 'high'
 
       // Draw background
       if (activeTab === "custom" && customBackground) {
@@ -186,7 +193,7 @@ export function AddBackground({ transparentImage, onClose }: AddBackgroundProps)
       }
 
       // Draw the transparent image on top
-      ctx.drawImage(foregroundImg, 0, 0)
+      ctx.drawImage(foregroundImg, 0, 0, canvas.width, canvas.height)
 
       // Convert to blob and download
       canvas.toBlob((blob) => {
@@ -194,7 +201,7 @@ export function AddBackground({ transparentImage, onClose }: AddBackgroundProps)
           const url = URL.createObjectURL(blob)
           const a = document.createElement("a")
           a.href = url
-          a.download = `erazor-with-background-${Date.now()}.png`
+          a.download = `erazor-with-background-${downloadScale > 1 ? `${downloadScale}x-` : ""}${Date.now()}.png`
           document.body.appendChild(a)
           a.click()
           document.body.removeChild(a)
@@ -202,7 +209,7 @@ export function AddBackground({ transparentImage, onClose }: AddBackgroundProps)
           toast.success("Image with background downloaded!")
           onClose()
         }
-      }, "image/png")
+      }, "image/png", 1.0)
     } catch (error) {
       console.error("Error compositing images:", error)
       toast.error("Failed to add background")
@@ -330,23 +337,49 @@ export function AddBackground({ transparentImage, onClose }: AddBackgroundProps)
           </Tabs>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4 border-t">
-            <Button variant="outline" onClick={onClose} className="flex-1">
-              Cancel
-            </Button>
-            <Button onClick={compositeImages} disabled={isCompositing} className="flex-1 gap-2">
-              {isCompositing ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  <Download className="h-4 w-4" />
-                  Download with Background
-                </>
-              )}
-            </Button>
+          <div className="space-y-3 pt-4 border-t">
+            {/* Scale selector for Pro/Enterprise users */}
+            {(userPlan.toLowerCase() === "pro" || userPlan.toLowerCase() === "enterprise") && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border">
+                <span className="text-xs font-medium text-muted-foreground">Download Size:</span>
+                <div className="flex gap-2">
+                  <Button
+                    variant={downloadScale === 1 ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setDownloadScale(1)}
+                    className="h-8 px-3 text-xs"
+                  >
+                    1x (Original)
+                  </Button>
+                  <Button
+                    variant={downloadScale === 4 ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setDownloadScale(4)}
+                    className="h-8 px-3 text-xs"
+                  >
+                    4x (Pro)
+                  </Button>
+                </div>
+              </div>
+            )}
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={onClose} className="flex-1">
+                Cancel
+              </Button>
+              <Button onClick={compositeImages} disabled={isCompositing} className="flex-1 gap-2">
+                {isCompositing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Download {downloadScale > 1 ? `${downloadScale}x ` : ""}with Background
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </Card>

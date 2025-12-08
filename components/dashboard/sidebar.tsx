@@ -4,24 +4,25 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { useUserStore } from "@/lib/store/user-store"
 import type { Profile } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import {
-  ChevronRight,
-  Coins,
-  CreditCard,
-  HelpCircle,
-  History,
-  ImageMinus,
-  LayoutDashboard,
-  Maximize2,
-  Menu,
-  Settings
+    ChevronRight,
+    Coins,
+    CreditCard,
+    HelpCircle,
+    History,
+    ImageMinus,
+    LayoutDashboard,
+    Maximize2,
+    Menu,
+    Settings
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 interface DashboardSidebarProps {
   profile: Profile
@@ -36,12 +37,21 @@ const navigation = [
   { name: "Settings", href: "/dashboard/settings", icon: Settings, description: "Account settings" },
 ]
 
-function SidebarContent({ profile, onNavigate }: { profile: Profile; onNavigate?: () => void }) {
+function SidebarContent({ profile: initialProfile, onNavigate }: { profile: Profile; onNavigate?: () => void }) {
   const pathname = usePathname()
+  const { profile, setProfile } = useUserStore()
+
+  // Initialize store with server-fetched profile
+  useEffect(() => {
+    setProfile(initialProfile as any)
+  }, [initialProfile, setProfile])
+
+  // Use store profile if available, fallback to initial
+  const currentProfile = profile || initialProfile
 
   // Calculate credits percentage for progress bar
-  const maxCredits = profile.plan === "enterprise" ? 2000 : profile.plan === "pro" ? 200 : 10
-  const creditsPercentage = Math.min((profile.credits / maxCredits) * 100, 100)
+  const maxCredits = currentProfile.plan === "enterprise" ? 2000 : currentProfile.plan === "pro" ? 200 : 10
+  const creditsPercentage = Math.min((currentProfile.credits / maxCredits) * 100, 100)
 
   return (
     <div className="flex h-full flex-col">
@@ -67,15 +77,15 @@ function SidebarContent({ profile, onNavigate }: { profile: Profile; onNavigate?
               variant="outline"
               className={cn(
                 "border-0 text-xs font-semibold capitalize",
-                profile.plan === "pro" && "bg-primary/15 text-primary",
-                profile.plan === "enterprise" && "bg-accent/15 text-accent",
-                profile.plan === "free" && "bg-muted text-muted-foreground",
+                currentProfile.plan === "pro" && "bg-primary/15 text-primary",
+                currentProfile.plan === "enterprise" && "bg-accent/15 text-accent",
+                currentProfile.plan === "free" && "bg-muted text-muted-foreground",
               )}
             >
-              {profile.plan}
+              {currentProfile.plan}
             </Badge>
           </div>
-          <p className="text-3xl font-bold text-sidebar-foreground mb-2">{profile.credits}</p>
+          <p className="text-3xl font-bold text-sidebar-foreground mb-2">{currentProfile.credits}</p>
           <Progress value={creditsPercentage} className="h-1.5 mb-3" />
           <Link
             href="/dashboard/billing"

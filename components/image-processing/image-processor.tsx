@@ -19,15 +19,17 @@ interface ImageProcessorProps {
   description: string
   isAuthenticated?: boolean
   userCredits?: number
+  userPlan?: string
 }
 
-export function ImageProcessor({ type, title, description, isAuthenticated = false, userCredits }: ImageProcessorProps) {
+export function ImageProcessor({ type, title, description, isAuthenticated = false, userCredits, userPlan = "free" }: ImageProcessorProps) {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
   const [progress, setProgress] = useState(0)
   const [result, setResult] = useState<string | null>(null)
   const [resultDownloadUrl, setResultDownloadUrl] = useState<string | null>(null)
+  const [downloadScale, setDownloadScale] = useState<number>(1)
   const [error, setError] = useState<string | null>(null)
   const [credits, setCredits] = useState<number | null>(isAuthenticated && userCredits !== undefined ? userCredits : null)
   const [requiresSignup, setRequiresSignup] = useState(false)
@@ -229,39 +231,84 @@ export function ImageProcessor({ type, title, description, isAuthenticated = fal
     setRequiresSignup(false)
   }
 
-  const downloadResult = async () => {
+  const downloadResult = async (scale: number = 1) => {
     const targetUrl = resultDownloadUrl || result
     if (!targetUrl) return
 
-    const directDownload = () => {
-      const a = document.createElement("a")
-      a.href = targetUrl
-      a.download = `erazor-${type}-${Date.now()}.png`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-    }
-
     try {
-      if (isLocalUrl(targetUrl)) {
-        directDownload()
+      // If scale is 1, use direct download
+      if (scale === 1) {
+        if (isLocalUrl(targetUrl)) {
+          const a = document.createElement("a")
+          a.href = targetUrl
+          a.download = `erazor-${type}-${Date.now()}.png`
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          return
+        }
+
+        const response = await fetch(targetUrl, {
+          mode: 'cors',
+          credentials: 'omit'
+        })
+        if (!response.ok) throw new Error('Download failed')
+        const blob = await response.blob()
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement("a")
+        a.href = url
+        a.download = `erazor-${type}-${Date.now()}.png`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
         return
       }
 
+      // For 4x scale, upscale the image using canvas
       const response = await fetch(targetUrl, {
         mode: 'cors',
         credentials: 'omit'
       })
       if (!response.ok) throw new Error('Download failed')
       const blob = await response.blob()
-      const url = URL.createObjectURL(blob)
-      const a = document.createElement("a")
-      a.href = url
-      a.download = `erazor-${type}-${Date.now()}.png`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      URL.revokeObjectURL(url)
+      const img = new Image()
+      img.crossOrigin = "anonymous"
+      
+      await new Promise((resolve, reject) => {
+        img.onload = resolve
+        img.onerror = reject
+        img.src = URL.createObjectURL(blob)
+      })
+
+      // Create canvas with scaled dimensions
+      const canvas = document.createElement('canvas')
+      canvas.width = img.width * scale
+      canvas.height = img.height * scale
+      const ctx = canvas.getContext('2d')
+      
+      if (!ctx) throw new Error('Failed to get canvas context')
+      
+      // Use better image smoothing for upscaling
+      ctx.imageSmoothingEnabled = true
+      ctx.imageSmoothingQuality = 'high'
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+
+      // Convert to blob and download
+      canvas.toBlob((scaledBlob) => {
+        if (scaledBlob) {
+          const url = URL.createObjectURL(scaledBlob)
+          const a = document.createElement("a")
+          a.href = url
+          a.download = `erazor-${type}-${scale}x-${Date.now()}.png`
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+        }
+      }, 'image/png', 1.0)
+
+      URL.revokeObjectURL(img.src)
     } catch (error) {
       console.error('Download error:', error)
       // Fallback: open in new tab
@@ -409,10 +456,34 @@ export function ImageProcessor({ type, title, description, isAuthenticated = fal
                     Add Background
                   </Button>
                 )}
+                {/* Scale selector for Pro/Enterprise users */}
+                {(userPlan.toLowerCase() === "pro" || userPlan.toLowerCase() === "enterprise") && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 border border-border">
+                    <span className="text-xs font-medium text-muted-foreground">Download Size:</span>
+                    <div className="flex gap-2">
+                      <Button
+                        variant={downloadScale === 1 ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setDownloadScale(1)}
+                        className="h-8 px-3 text-xs"
+                      >
+                        1x (Original)
+                      </Button>
+                      <Button
+                        variant={downloadScale === 4 ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setDownloadScale(4)}
+                        className="h-8 px-3 text-xs"
+                      >
+                        4x (Pro)
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                  <Button onClick={downloadResult} className="gap-2 flex-1" size="sm">
+                  <Button onClick={() => downloadResult(downloadScale)} className="gap-2 flex-1" size="sm">
                     <Download className="h-4 w-4" />
-                    Download Result
+                    Download {downloadScale > 1 ? `${downloadScale}x ` : ""}Result
                   </Button>
                   <Button variant="outline" onClick={reset} size="sm" className="flex-1">
                     Process Another
@@ -442,7 +513,8 @@ export function ImageProcessor({ type, title, description, isAuthenticated = fal
       {showAddBackground && result && (
         <AddBackground 
           transparentImage={result} 
-          onClose={() => setShowAddBackground(false)} 
+          onClose={() => setShowAddBackground(false)}
+          userPlan={userPlan}
         />
       )}
     </div>
