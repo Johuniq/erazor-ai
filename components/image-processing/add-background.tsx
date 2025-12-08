@@ -166,17 +166,17 @@ export function AddBackground({ transparentImage, onClose }: AddBackgroundProps)
         })
         ctx.drawImage(bgImg, 0, 0, canvas.width, canvas.height)
       } else {
-        // Draw gradient background by capturing the gradient canvas
-        const gradientCanvas = document.querySelector('canvas[data-gradient="true"]') as HTMLCanvasElement
-        if (gradientCanvas) {
-          // Create temporary canvas for scaling
-          const tempCanvas = document.createElement("canvas")
-          const tempCtx = tempCanvas.getContext("2d")
-          tempCanvas.width = canvas.width
-          tempCanvas.height = canvas.height
-          if (tempCtx) {
-            tempCtx.drawImage(gradientCanvas, 0, 0, canvas.width, canvas.height)
-            ctx.drawImage(tempCanvas, 0, 0)
+        // Draw gradient background by finding the canvas in the preview container
+        const previewContainer = document.querySelector('.relative.aspect-video.bg-muted')
+        if (previewContainer) {
+          const gradientCanvas = previewContainer.querySelector('canvas') as HTMLCanvasElement
+          if (gradientCanvas && gradientCanvas.width > 0 && gradientCanvas.height > 0) {
+            // Draw the gradient canvas scaled to match the foreground image size
+            ctx.drawImage(gradientCanvas, 0, 0, canvas.width, canvas.height)
+          } else {
+            // Fallback: solid color background
+            ctx.fillStyle = selectedGradient.colors[0]
+            ctx.fillRect(0, 0, canvas.width, canvas.height)
           }
         } else {
           // Fallback: solid color background
@@ -243,7 +243,6 @@ export function AddBackground({ transparentImage, onClose }: AddBackgroundProps)
                   grainMixer={selectedGradient.grainMixer}
                   grainOverlay={selectedGradient.grainOverlay}
                   rotation={selectedGradient.rotation}
-                  data-gradient="true"
                 />
               ) : customBackground ? (
                 <img src={customBackground} alt="Custom background" className="w-full h-full object-cover" />
