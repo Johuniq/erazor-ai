@@ -2,6 +2,15 @@ import { fingerprintSchema } from "@/lib/validations/api"
 import { createClient } from "@supabase/supabase-js"
 import { type NextRequest, NextResponse } from "next/server"
 
+function shouldResetCredits(lastReset?: string | null) {
+  if (!lastReset) return true
+  const now = new Date()
+  const last = new Date(lastReset)
+  return now.getUTCFullYear() !== last.getUTCFullYear() ||
+    now.getUTCMonth() !== last.getUTCMonth() ||
+    now.getUTCDate() !== last.getUTCDate()
+}
+
 function getServiceClient() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
@@ -27,7 +36,7 @@ export async function POST(request: NextRequest) {
     // First, try to get existing user
     const { data: existingUser, error: fetchError } = await supabase
       .from("anon_users")
-      .select("credits")
+      .select("credits, last_credit_reset")
       .eq("fingerprint", fingerprint)
       .maybeSingle()
 
@@ -38,13 +47,28 @@ export async function POST(request: NextRequest) {
 
     // If user exists, return their current credits
     if (existingUser) {
+      if (shouldResetCredits(existingUser.last_credit_reset)) {
+        const { data: resetUser, error: resetError } = await supabase
+          .from("anon_users")
+          .update({ credits: 3, last_credit_reset: new Date().toISOString(), updated_at: new Date().toISOString() })
+          .eq("fingerprint", fingerprint)
+          .select("credits")
+          .single()
+
+        if (resetError) {
+          console.error("Error resetting anon credits:", resetError)
+          return NextResponse.json({ message: "Database error" }, { status: 500 })
+        }
+
+        return NextResponse.json({ credits: resetUser?.credits ?? 3 })
+      }
       return NextResponse.json({ credits: existingUser.credits ?? 0 })
     }
 
     // User doesn't exist - create with INSERT and handle conflict
     const { data: newUser, error: insertError } = await supabase
       .from("anon_users")
-      .insert({ fingerprint, credits: 3 })
+      .insert({ fingerprint, credits: 3, last_credit_reset: new Date().toISOString(), updated_at: new Date().toISOString() })
       .select("credits")
       .single()
 

@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS anon_users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   fingerprint TEXT UNIQUE NOT NULL,
   credits INTEGER DEFAULT 3,
+  last_credit_reset TIMESTAMPTZ DEFAULT NOW(),
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -41,11 +41,11 @@ export function BatchUpload({
   const [batchFiles, setBatchFiles] = useState<BatchFile[]>([])
   const [error, setError] = useState<string | null>(null)
 
-  const onDrop = useCallback((acceptedFiles: File[], rejectedFiles: { file: File; errors: { code: string }[] }[]) => {
+  const onDrop = useCallback((acceptedFiles: File[], fileRejections: import('react-dropzone').FileRejection[], event?: import('react-dropzone').DropEvent) => {
     setError(null)
     
-    if (rejectedFiles.length > 0) {
-      const rejection = rejectedFiles[0]
+    if (fileRejections.length > 0) {
+      const rejection = fileRejections[0]
       if (rejection.errors.some(e => e.code === "file-too-large")) {
         setError(`Some files are too large. Maximum size is ${formatFileSize(maxSize)} per file.`)
         return
@@ -95,7 +95,34 @@ export function BatchUpload({
   const handleBatchProcess = async () => {
     if (batchFiles.length === 0) return
     const files = batchFiles.map(bf => bf.file)
-    await onBatchUpload(files)
+    setError(null)
+    setBatchFiles(prev =>
+      prev.map(file => ({
+        ...file,
+        status: "processing",
+        error: undefined,
+      })),
+    )
+
+    try {
+      await onBatchUpload(files)
+      setBatchFiles(prev =>
+        prev.map(file => ({
+          ...file,
+          status: "complete",
+        })),
+      )
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Batch processing failed. Please try again."
+      setError(message)
+      setBatchFiles(prev =>
+        prev.map(file => ({
+          ...file,
+          status: "error",
+          error: message,
+        })),
+      )
+    }
   }
 
   const pendingCount = batchFiles.filter(f => f.status === "pending").length

@@ -9,6 +9,15 @@ import { type NextRequest, NextResponse } from "next/server"
 const BG_REMOVER_API = "https://api-bgremover.icons8.com/api/v1"
 const UPSCALER_API = "https://api-upscaler.icons8.com/api/v1"
 
+function shouldResetCredits(lastReset?: string | null) {
+  if (!lastReset) return true
+  const now = new Date()
+  const last = new Date(lastReset)
+  return now.getUTCFullYear() !== last.getUTCFullYear() ||
+    now.getUTCMonth() !== last.getUTCMonth() ||
+    now.getUTCDate() !== last.getUTCDate()
+}
+
 // Use service role for anonymous operations
 function getServiceClient() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -139,7 +148,7 @@ export async function POST(request: NextRequest) {
     if (!anonUser) {
       const { data: newUser, error: createError } = await supabase
         .from("anon_users")
-        .insert({ fingerprint, credits: 3 })
+        .insert({ fingerprint, credits: 3, last_credit_reset: new Date().toISOString(), updated_at: new Date().toISOString() })
         .select()
         .single()
 
@@ -148,6 +157,21 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ message: "Failed to create user" }, { status: 500 })
       }
       anonUser = newUser
+    }
+
+    if (shouldResetCredits(anonUser.last_credit_reset)) {
+      const { data: refreshedUser, error: resetError } = await supabase
+        .from("anon_users")
+        .update({ credits: 3, last_credit_reset: new Date().toISOString(), updated_at: new Date().toISOString() })
+        .eq("id", anonUser.id)
+        .select()
+        .single()
+
+      if (resetError) {
+        console.error("Failed to reset anon user credits:", resetError)
+        return NextResponse.json({ message: "Failed to refresh credits" }, { status: 500 })
+      }
+      anonUser = refreshedUser
     }
 
     // Atomically check and deduct credits to prevent race conditions
