@@ -65,6 +65,10 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               <DropdownMenuItem asChild>
+                <Link href="/tools">All Tools</Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
                 <Link href="/tools/remove-background">Background Removal</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
@@ -72,6 +76,9 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <Button variant="ghost" asChild>
+            <Link href="/use-cases">Use Cases</Link>
+          </Button>
           <Button variant="ghost" asChild>
             <Link href="#features">Features</Link>
           </Button>
@@ -162,6 +169,13 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
           <nav className="flex flex-col gap-1 p-4">
             <p className="px-3 py-2 text-xs font-medium text-muted-foreground">Tools</p>
             <Link
+              href="/tools"
+              className="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              All Tools
+            </Link>
+            <Link
               href="/tools/remove-background"
               className="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
               onClick={() => setMobileMenuOpen(false)}
@@ -176,6 +190,13 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
               Image Upscaling
             </Link>
             <div className="my-2 h-px bg-border" />
+            <Link
+              href="/use-cases"
+              className="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Use Cases
+            </Link>
             <Link
               href="#features"
               className="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"

@@ -15,3 +15,5 @@ pnpm-debug.log*
 *.iml
 out/
 .vercel
+SEO_OPTIMIZATION_GUIDE.md
+SEO_QUICK_START.md

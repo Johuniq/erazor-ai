@@ -5,23 +5,30 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Free AI Image Upscaler - Upscale Images Online with AI | Erazor AI",
+  title: "AI Image Upscaler Free - Upscale & Enlarge Images Online 4x | Erazor AI",
   description:
-    "Upscale images up to 4x with AI. Increase image resolution while preserving quality. Free to try, no signup required. Part of our AI image editing suite. Perfect for enlarging photos, artwork, and product images.",
+    "Upscale images up to 4x resolution with AI - 100% free. Enlarge photos without losing quality. Best AI image upscaler for product photos, portraits & artwork. No signup, no watermark. Increase image resolution online now!",
   keywords: [
     "image upscaler",
     "upscale image",
-    "AI image upscaler",
+    "ai image upscaler",
+    "upscale image online free",
+    "enlarge image without losing quality",
     "increase image resolution",
-    "enlarge image",
-    "image enhancer",
-    "photo enhancer",
-    "AI upscaling",
     "free image upscaler",
-    "online image upscaler",
-    "4x upscale",
-    "image resolution enhancer",
     "photo upscaler",
+    "ai photo enhancer",
+    "image resolution enhancer",
+    "enlarge photo online",
+    "4x image upscaler",
+    "upscale photo quality",
+    "enhance image quality",
+    "image quality improver",
+    "upscale image ai",
+    "increase photo resolution online",
+    "make image higher resolution",
+    "upscale png online",
+    "enlarge picture without pixelation"
   ],
   openGraph: {
     title: "Free Image Upscaler - Upscale Images Online with AI",
@@ -179,11 +186,10 @@ export default async function UpscalePage() {
               <Maximize2 className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight lg:text-4xl">
-              Upscale Image with AI
+              AI Image Upscaler - Upscale & Enlarge Images Free Online
             </h1>
-            <p className="mx-auto mt-2 sm:mt-3 max-w-xl text-base sm:text-lg text-muted-foreground">
-              Enhance image resolution up to 4x while preserving quality. AI
-              adds natural detail for stunning results.
+            <p className="mx-auto mt-2 sm:mt-3 max-w-2xl text-base sm:text-lg text-muted-foreground">
+              Upscale images up to 4x resolution with AI. Enlarge photos without losing quality. Free online image upscaler - no signup, no watermark.
             </p>
           </div>
 

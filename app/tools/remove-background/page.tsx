@@ -5,22 +5,30 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Free AI Background Remover - Remove Image Background Online | Erazor AI",
+  title: "Remove Background from Image Free - AI Background Remover Online | Erazor AI",
   description:
-    "Remove backgrounds from images instantly with AI. 100% automatic, free to try, no signup required. Part of our AI image editing suite. Perfect for product photos, portraits, logos, and more.",
+    "Remove background from any image in 5 seconds with AI. 100% automatic background remover - no manual editing needed. Free, no signup, no watermark. Perfect for product photos, portraits, logos & ecommerce. Try now!",
   keywords: [
-    "remove background",
-    "background remover",
     "remove background from image",
+    "remove background from image free",
+    "background remover",
     "free background remover",
-    "online background remover",
-    "transparent background",
-    "remove bg",
+    "ai background remover",
+    "remove bg online",
+    "remove background online free",
+    "transparent background maker",
     "background eraser",
+    "remove white background from image",
     "photo background remover",
     "product photo background removal",
-    "AI background removal",
+    "remove background from photo",
     "automatic background removal",
+    "background removal tool",
+    "cut out background",
+    "remove image background online",
+    "png background remover",
+    "background removal ai",
+    "remove background no signup"
   ],
   openGraph: {
     title: "Free Background Remover - Remove Image Background Online",
@@ -178,11 +186,10 @@ export default async function RemoveBackgroundPage() {
               <ImageMinus className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight lg:text-4xl">
-              Remove Background from Image
+              AI Background Remover - Remove Background from Image Free
             </h1>
-            <p className="mx-auto mt-2 sm:mt-3 max-w-xl text-base sm:text-lg text-muted-foreground">
-              Instantly remove backgrounds from any image with AI-powered
-              precision. Free to try, no signup required.
+            <p className="mx-auto mt-2 sm:mt-3 max-w-2xl text-base sm:text-lg text-muted-foreground">
+              Remove backgrounds from any image in seconds with AI. 100% automatic, free, no signup needed. Perfect for product photos, portraits & ecommerce.
             </p>
           </div>
 

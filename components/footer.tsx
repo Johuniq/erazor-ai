@@ -60,6 +60,11 @@ export function Footer() {
             <h3 className="mb-4 text-sm font-semibold">Tools</h3>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li>
+                <Link href="/tools" className="transition-colors hover:text-foreground">
+                  All Tools
+                </Link>
+              </li>
+              <li>
                 <Link href="/tools/remove-background" className="transition-colors hover:text-foreground">
                   Background Removal
                 </Link>
@@ -83,6 +88,11 @@ export function Footer() {
               <li>
                 <Link href="/about" className="transition-colors hover:text-foreground">
                   About Us
+                </Link>
+              </li>
+              <li>
+                <Link href="/use-cases" className="transition-colors hover:text-foreground">
+                  Use Cases
                 </Link>
               </li>
               <li>
