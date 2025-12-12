@@ -80,26 +80,11 @@ export default async function FaceSwapPage() {
 
   return (
     <main className="flex-1">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
-            AI Face Swapper - Swap Faces Online Free
-          </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-base sm:text-lg text-muted-foreground">
-            Swap faces between two photos automatically using AI. Perfect for fun photos, creative projects, and entertainment.
-          </p>
-        </div>
-
-        {/* Face Swapper Component */}
-        <FaceSwapper
-          title="AI Face Swapper"
-          description="Swap faces between two photos automatically with AI"
-          isAuthenticated={!!user}
-          userCredits={userCredits}
-          userPlan={userPlan}
-        />
-      </div>
+      <FaceSwapper
+        isAuthenticated={!!user}
+        userCredits={userCredits}
+        userPlan={userPlan}
+      />
 
       {/* SEO Content */}
       <section className="border-t bg-muted/20 py-16">

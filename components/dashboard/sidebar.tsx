@@ -17,7 +17,8 @@ import {
     LayoutDashboard,
     Maximize2,
     Menu,
-    Settings
+    Settings,
+    Users
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
@@ -32,6 +33,7 @@ const navigation = [
   { name: "Overview", href: "/dashboard", icon: LayoutDashboard, description: "Dashboard summary" },
   { name: "Background Removal", href: "/dashboard/remove-background", icon: ImageMinus, description: "Remove backgrounds" },
   { name: "Image Upscaling", href: "/dashboard/upscale", icon: Maximize2, description: "Enhance resolution" },
+  { name: "Face Swap", href: "/dashboard/face-swap", icon: Users, description: "Swap faces with AI" },
   { name: "History", href: "/dashboard/history", icon: History, description: "View past jobs" },
   { name: "Billing", href: "/dashboard/billing", icon: CreditCard, description: "Manage subscription" },
   { name: "Settings", href: "/dashboard/settings", icon: Settings, description: "Account settings" },

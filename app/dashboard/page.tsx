@@ -16,6 +16,7 @@ import {
   Maximize2,
   Sparkles,
   TrendingUp,
+  Users,
   Zap,
 } from "lucide-react"
 import Link from "next/link"
@@ -46,10 +47,11 @@ export default async function OverviewPage() {
     .limit(5)
 
   // Fetch job stats
-  const [total, bgRemoval, upscale, completed] = await Promise.all([
+  const [total, bgRemoval, upscale, faceSwap, completed] = await Promise.all([
     supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id),
     supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("job_type", "bg_removal"),
     supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("job_type", "upscale"),
+    supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("job_type", "face_swap"),
     supabase.from("processing_jobs").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("status", "completed"),
   ])
 
@@ -57,6 +59,7 @@ export default async function OverviewPage() {
     totalJobs: total.count || 0,
     bgRemovalJobs: bgRemoval.count || 0,
     upscaleJobs: upscale.count || 0,
+    faceSwapJobs: faceSwap.count || 0,
     completedJobs: completed.count || 0,
   }
 
@@ -90,11 +93,11 @@ export default async function OverviewPage() {
       bgColor: "bg-emerald-500/10",
     },
     {
-      label: "Success Rate",
-      value: stats.totalJobs ? `${Math.round((stats.completedJobs / stats.totalJobs) * 100)}%` : "0%",
-      icon: CheckCircle2,
-      color: "text-amber-500",
-      bgColor: "bg-amber-500/10",
+      label: "Face Swaps",
+      value: stats.faceSwapJobs,
+      icon: Users,
+      color: "text-pink-500",
+      bgColor: "bg-pink-500/10",
     },
   ]
 
@@ -103,7 +106,7 @@ export default async function OverviewPage() {
       title: "Remove Background",
       description: "Instantly remove backgrounds from any image",
       icon: ImageMinus,
-      href: "/dashboard",
+      href: "/dashboard/remove-background",
       color: "from-purple-500 to-indigo-500",
     },
     {
@@ -112,6 +115,13 @@ export default async function OverviewPage() {
       icon: Maximize2,
       href: "/dashboard/upscale",
       color: "from-emerald-500 to-teal-500",
+    },
+    {
+      title: "Face Swap",
+      description: "Swap faces between two photos with AI",
+      icon: Users,
+      href: "/dashboard/face-swap",
+      color: "from-pink-500 to-rose-500",
     },
   ]
 
