@@ -75,6 +75,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/tools/face-swap" className="transition-colors hover:text-foreground">
+                  Face Swap
+                </Link>
+              </li>
+              <li>
                 <Link href="#pricing" className="transition-colors hover:text-foreground">
                   Pricing
                 </Link>

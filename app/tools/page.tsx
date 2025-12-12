@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, ImageMinus, Sparkles, Wand2, Zap } from "lucide-react";
+import { ArrowRight, ImageMinus, Sparkles, Users, Wand2, Zap } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -85,6 +85,22 @@ const tools = [
     ],
     badge: "Pro Feature",
     badgeColor: "bg-purple-500"
+  },
+  {
+    title: "AI Face Swapper",
+    description: "Swap faces between two photos automatically with AI. Perfect for fun photos, creative projects, and entertainment.",
+    icon: Users,
+    href: "/tools/face-swap",
+    color: "text-pink-500",
+    bgColor: "bg-pink-50 dark:bg-pink-950",
+    features: [
+      "Automatic face detection",
+      "Natural blending & alignment",
+      "Results in 30-60 seconds",
+      "High-quality face swaps"
+    ],
+    badge: "New",
+    badgeColor: "bg-pink-500"
   },
   {
     title: "Batch Processing",

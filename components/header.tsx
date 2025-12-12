@@ -74,6 +74,9 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
               <DropdownMenuItem asChild>
                 <Link href="/tools/upscale">Image Upscaling</Link>
               </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/tools/face-swap">Face Swap</Link>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Button variant="ghost" asChild>
@@ -188,6 +191,13 @@ export function Header({ isLoggedIn = false, userEmail }: HeaderProps) {
               onClick={() => setMobileMenuOpen(false)}
             >
               Image Upscaling
+            </Link>
+            <Link
+              href="/tools/face-swap"
+              className="rounded-md px-3 py-2 text-sm font-medium hover:bg-muted"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Face Swap
             </Link>
             <div className="my-2 h-px bg-border" />
             <Link
