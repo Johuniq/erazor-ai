@@ -65,27 +65,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Both target and source images are required" }, { status: 400 })
     }
 
-    // Atomically check and deduct credits (2 credits for face swap)
-    const { data: creditResult, error: creditError } = await supabase
-      .rpc('deduct_credit', {
-        p_user_id: user.id,
-        p_amount: 2
-      })
-      .single()
-
-    if (creditError) {
-      console.error("Credit deduction error:", creditError)
-      return NextResponse.json({ message: "Failed to process credits" }, { status: 500 })
-    }
-
-    if (!creditResult || !(creditResult as any).success) {
-      return NextResponse.json({ 
-        message: "Insufficient credits. Face swap requires 2 credits.",
-        credits: (creditResult as any)?.credits || 0
-      }, { status: 402 })
-    }
-
-    // Validate files
+    // Validate files BEFORE deducting credits
     const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB max
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg']
     
@@ -155,6 +135,9 @@ export async function POST(request: NextRequest) {
 
       console.log("Target URL:", targetUrl)
       console.log("Source URL:", sourceUrl)
+      
+      // Test if URLs are accessible
+      console.log("Testing Cloudinary URLs accessibility...")
     } catch (uploadError) {
       console.error("Cloudinary upload error:", uploadError)
       // Clean up any uploaded images
@@ -168,6 +151,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Get bounding boxes first - using the correct API format
+    console.log("Requesting face detection from Icons8 API...")
+    console.log("Payload:", JSON.stringify({ urls: [targetUrl, sourceUrl] }, null, 2))
+    
     const bboxResponse = await fetchWithTimeout(`${FACE_SWAPPER_API}/get_bbox?token=${apiKey}`, {
       method: "POST",
       headers: {
@@ -182,6 +168,7 @@ export async function POST(request: NextRequest) {
       const errorText = await bboxResponse.text()
       console.error("Face detection error:", errorText)
       console.error("Response status:", bboxResponse.status)
+      console.error("URLs sent:", { targetUrl, sourceUrl })
       
       // Clean up uploaded images from Cloudinary
       await cloudinary.uploader.destroy(targetPublicId).catch(console.error)
@@ -194,6 +181,8 @@ export async function POST(request: NextRequest) {
 
     const bboxData = await bboxResponse.json()
     console.log("Bbox response:", JSON.stringify(bboxData, null, 2))
+    console.log("Target faces found:", bboxData[0]?.faces?.length || 0)
+    console.log("Source faces found:", bboxData[1]?.faces?.length || 0)
     
     if (!bboxData || !Array.isArray(bboxData) || bboxData.length < 2) {
       // Clean up uploaded images from Cloudinary
@@ -217,6 +206,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ 
         message: `No face detected in ${missingFace}. Please use images with clearly visible, front-facing faces.` 
       }, { status: 400 })
+    }
+
+    // Faces detected successfully - NOW deduct credits
+    const { data: creditResult, error: creditError } = await supabase
+      .rpc('deduct_credit', {
+        p_user_id: user.id,
+        p_amount: 2
+      })
+      .single()
+
+    if (creditError) {
+      console.error("Credit deduction error:", creditError)
+      // Clean up images
+      await cloudinary.uploader.destroy(targetPublicId).catch(console.error)
+      await cloudinary.uploader.destroy(sourcePublicId).catch(console.error)
+      return NextResponse.json({ message: "Failed to process credits" }, { status: 500 })
+    }
+
+    if (!creditResult || !(creditResult as any).success) {
+      // Clean up images
+      await cloudinary.uploader.destroy(targetPublicId).catch(console.error)
+      await cloudinary.uploader.destroy(sourcePublicId).catch(console.error)
+      return NextResponse.json({ 
+        message: "Insufficient credits. Face swap requires 2 credits.",
+        credits: (creditResult as any)?.credits || 0
+      }, { status: 402 })
     }
 
     // Use the first detected face from each image
