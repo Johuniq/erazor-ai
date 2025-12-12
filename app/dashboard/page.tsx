@@ -6,18 +6,17 @@ import { createClient } from "@/lib/supabase/server"
 import type { ProcessingJob } from "@/lib/types"
 import { cn } from "@/lib/utils"
 import {
-  ArrowRight,
-  CheckCircle2,
-  Clock,
-  Crown,
-  ImageIcon,
-  ImageMinus,
-  LayoutDashboard,
-  Maximize2,
-  Sparkles,
-  TrendingUp,
-  Users,
-  Zap,
+    ArrowRight,
+    Clock,
+    Crown,
+    ImageIcon,
+    ImageMinus,
+    LayoutDashboard,
+    Maximize2,
+    Sparkles,
+    TrendingUp,
+    Users,
+    Zap
 } from "lucide-react"
 import Link from "next/link"
 import { redirect } from "next/navigation"

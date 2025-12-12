@@ -4,7 +4,7 @@ import { FaceSwapper } from "@/components/image-processing/face-swapper"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useUserStore } from "@/lib/store/user-store"
-import { Lightbulb, Users, Zap, Shield } from "lucide-react"
+import { Lightbulb, Shield, Users, Zap } from "lucide-react"
 import { useEffect } from "react"
 
 export default function FaceSwapPage() {
