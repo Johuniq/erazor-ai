@@ -225,9 +225,9 @@ export function FaceSwapper({ isAuthenticated = false, userCredits, userPlan = "
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-8xl px-4 py-12 sm:px-6 lg:px-8">
       {/* Header */}
-      <div className="mb-8 text-center">
+      {/* <div className="mb-8 text-center">
         <div className="mb-4 inline-flex items-center gap-2 rounded-full border bg-muted px-4 py-1.5">
           <Users className="h-4 w-4" />
           <span className="text-sm font-medium">AI Face Swapper</span>
@@ -248,7 +248,7 @@ export function FaceSwapper({ isAuthenticated = false, userCredits, userPlan = "
             {credits} credits remaining • 2 credits per swap
           </Badge>
         )}
-      </div>
+      </div> */}
 
       {/* Main Content */}
       <div className="grid gap-8 lg:grid-cols-2">
@@ -476,7 +476,7 @@ export function FaceSwapper({ isAuthenticated = false, userCredits, userPlan = "
       </div>
 
       {/* Info Section */}
-      <div className="mt-12 grid gap-6 sm:grid-cols-3">
+      {/* <div className="mt-12 grid gap-6 sm:grid-cols-3">
         <Card className="p-6">
           <div className="mb-3 inline-flex rounded-lg bg-blue-50 p-3 dark:bg-blue-950">
             <Users className="h-6 w-6 text-blue-500" />
@@ -506,7 +506,7 @@ export function FaceSwapper({ isAuthenticated = false, userCredits, userPlan = "
             Get results in 30-60 seconds with our optimized AI models
           </p>
         </Card>
-      </div>
+      </div> */}
     </div>
   )
 }

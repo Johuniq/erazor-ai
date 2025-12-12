@@ -17,7 +17,6 @@ export default function FaceSwapPage() {
     }
   }, [profile, fetchProfile])
 
-  const userPlan = profile?.plan || "free"
   const userCredits = profile?.credits || 0
 
   return (
@@ -50,7 +49,6 @@ export default function FaceSwapPage() {
           <FaceSwapper
             isAuthenticated={true}
             userCredits={userCredits}
-            userPlan={userPlan}
           />
         </CardContent>
       </Card>
@@ -74,14 +72,16 @@ export default function FaceSwapPage() {
             description: "Higher resolution images yield better quality results",
           },
         ].map((tip) => (
-          <Card key={tip.title} className="border-border/50">
-            <CardContent className="flex items-start gap-3 p-3 sm:p-4">
-              <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                <tip.icon className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-              </div>
-              <div className="space-y-0.5 sm:space-y-1">
-                <p className="text-xs sm:text-sm font-medium">{tip.title}</p>
-                <p className="text-[11px] sm:text-xs text-muted-foreground">{tip.description}</p>
+          <Card key={tip.title} className="border-dashed border-border/60">
+            <CardContent className="p-3 sm:p-4">
+              <div className="flex items-start gap-2 sm:gap-3">
+                <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10">
+                  <tip.icon className="h-4 w-4 sm:h-5 sm:w-5 text-accent" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm">{tip.title}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{tip.description}</p>
+                </div>
               </div>
             </CardContent>
           </Card>
