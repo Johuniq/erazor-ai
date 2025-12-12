@@ -54,10 +54,15 @@ export async function GET(
 
     const data = await response.json()
     
+    console.log(`[Face Swap Status] Job ${jobId}: Status ${data.status} (${data.statusName})`, {
+      hasProcessedUrl: !!data.processed?.url,
+      statusCode: data.status
+    })
+    
     // Update database with status
     if (data.status === 2 && data.processed?.url) {
       // Status 2 means "ready"
-      await supabase
+      const { error: updateError } = await supabase
         .from("processing_jobs")
         .update({
           status: "completed",
@@ -66,9 +71,15 @@ export async function GET(
         })
         .eq("external_job_id", jobId)
         .eq("user_id", user.id)
+      
+      if (updateError) {
+        console.error(`[Face Swap Status] Failed to update job ${jobId}:`, updateError)
+      } else {
+        console.log(`[Face Swap Status] Successfully updated job ${jobId} to completed`)
+      }
     } else if (data.status === 3) {
       // Status 3 means "failed"
-      await supabase
+      const { error: updateError } = await supabase
         .from("processing_jobs")
         .update({
           status: "failed",
@@ -76,10 +87,26 @@ export async function GET(
         })
         .eq("external_job_id", jobId)
         .eq("user_id", user.id)
+      
+      if (updateError) {
+        console.error(`[Face Swap Status] Failed to update job ${jobId}:`, updateError)
+      } else {
+        console.log(`[Face Swap Status] Successfully updated job ${jobId} to failed`)
+      }
+    }
+
+    // Return consistent status
+    let statusName = data.statusName || "processing"
+    if (data.status === 2) {
+      statusName = "ready"
+    } else if (data.status === 3) {
+      statusName = "failed"
+    } else if (data.status === 1) {
+      statusName = "processing"
     }
 
     return NextResponse.json({
-      status: data.statusName || "processing",
+      status: statusName,
       processed: data.processed || null,
       jobId: data.id,
     })
