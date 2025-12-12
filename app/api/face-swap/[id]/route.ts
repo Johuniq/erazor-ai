@@ -58,23 +58,23 @@ export async function GET(
     if (data.status === 2 && data.processed?.url) {
       // Status 2 means "ready"
       await supabase
-        .from("processing_history")
+        .from("processing_jobs")
         .update({
           status: "completed",
           result_url: data.processed.url,
           completed_at: new Date().toISOString(),
         })
-        .eq("job_id", jobId)
+        .eq("external_job_id", jobId)
         .eq("user_id", user.id)
     } else if (data.status === 3) {
       // Status 3 means "failed"
       await supabase
-        .from("processing_history")
+        .from("processing_jobs")
         .update({
           status: "failed",
           error: "Face swap processing failed",
         })
-        .eq("job_id", jobId)
+        .eq("external_job_id", jobId)
         .eq("user_id", user.id)
     }
 

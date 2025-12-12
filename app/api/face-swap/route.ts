@@ -2,7 +2,6 @@ import { verifyOrigin } from "@/lib/csrf-protection"
 import { fetchWithTimeout } from "@/lib/fetch-with-timeout"
 import { checkCombinedRateLimit, getRateLimitHeaders, rateLimiters } from "@/lib/redis-rate-limiter"
 import { createClient } from "@/lib/supabase/server"
-import { sanitizeFilename } from "@/lib/validations/api"
 import { v2 as cloudinary } from 'cloudinary'
 import { type NextRequest, NextResponse } from "next/server"
 
@@ -273,13 +272,13 @@ export async function POST(request: NextRequest) {
     const swapData = await swapResponse.json()
     const jobId = swapData.id
 
-    // Save job to database
-    await supabase.from("processing_history").insert({
+    // Save job to database (processing_jobs for history/stats)
+    await supabase.from("processing_jobs").insert({
       user_id: user.id,
-      job_id: jobId,
       job_type: "face_swap",
+      external_job_id: jobId,
+      source_url: targetUrl,
       status: "processing",
-      original_filename: sanitizeFilename(targetImage.name),
       credits_used: 2,
     })
     
