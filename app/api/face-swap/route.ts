@@ -6,7 +6,7 @@ import { sanitizeFilename } from "@/lib/validations/api"
 import { v2 as cloudinary } from 'cloudinary'
 import { type NextRequest, NextResponse } from "next/server"
 
-const FACE_SWAPPER_API = "https://api-faceswapper-origin.icons8.com/api/v1"
+const FACE_SWAPPER_API = "https://api-faceswapper.icons8.com/api/v1"
 
 // Configure Cloudinary
 cloudinary.config({

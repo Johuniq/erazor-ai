@@ -3,7 +3,7 @@ import { fetchWithTimeout } from "@/lib/fetch-with-timeout"
 import { createClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
 
-const FACE_SWAPPER_API = "https://api-faceswapper-origin.icons8.com/api/v1"
+const FACE_SWAPPER_API = "https://api-faceswapper.icons8.com/api/v1"
 
 export async function GET(
   request: NextRequest,
